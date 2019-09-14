@@ -1,4 +1,6 @@
-#[derive(Debug, Clone)]
+use serde::Serialize;
+
+#[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
 pub struct Matrix<T> {
     d: Vec<T>,
     size: usize,

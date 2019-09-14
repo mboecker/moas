@@ -1,17 +1,25 @@
 #![feature(test)]
-
 extern crate test;
 
 use rusqlite::{Connection, NO_PARAMS};
-use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 
-mod assembly;
-mod attachment;
-mod graph;
 mod prelude;
+
+mod assembly;
+use assembly::assemble;
+
+mod attachment;
+use attachment::attach;
+
+mod graph;
+use graph::Graph;
+
 mod subgraphs;
-mod weisfeiler_lehman;
+use subgraphs::subgraphs;
+
+mod isomorphism;
+use isomorphism::are_isomorphic;
 
 #[derive(Debug)]
 /// An entry from the SQLite Database of all the pubchem molecules.
@@ -24,6 +32,7 @@ struct CompoundEntry {
 }
 
 fn calculate_hash<T: Hash>(t: &T) -> u64 {
+    use std::collections::hash_map::DefaultHasher;
     let mut s = DefaultHasher::new();
     t.hash(&mut s);
     s.finish()
@@ -47,29 +56,21 @@ fn main() {
         .map(|x| x.unwrap());
 
     for x in iter {
-        use itertools::Itertools;
-
         let g = graph::Graph::new(x.structure);
-        //println!("{:?}", g);
 
-        println!("graph subgraphs {{");
+        // determine the graphs' subgraphs.
+        let sg = subgraphs::subgraphs(&g, 7);
+        let sg = subgraphs::count_subgraphs(&g, &sg, 7);
 
-        //       for i in 3..=12 {
-        let i = 5;
-        let sg = subgraphs::subgraphs(&g, i);
-        //  println!("für k = {} gibt es {} subgraphen", i, sg.len() / i);
-        for (j, subgraph) in sg
-            .into_iter()
-            .chunks(i)
-            .into_iter()
-            .map(|x| g.subgraph(&x.collect::<Vec<_>>()))
-            .enumerate()
-        {
-            subgraph.dump(i * j, true);
-            eprintln!("{:x}", calculate_hash(&subgraph));
+        // re-assemble the graph
+        let g = assemble(sg);
+
+        println!("graph possibles {{");
+        let mut i = 0;
+        for g in g {
+            g.dump(i, true);
+            i += g.size();
         }
-        //     }
-
         println!("}}");
     }
 }
