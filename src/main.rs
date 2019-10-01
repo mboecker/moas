@@ -64,13 +64,5 @@ fn main() {
 
         // re-assemble the graph
         let g = assemble(sg);
-
-        println!("graph possibles {{");
-        let mut i = 0;
-        for g in g {
-            g.dump(i, true);
-            i += g.size();
-        }
-        println!("}}");
     }
 }

@@ -21,7 +21,7 @@ pub fn are_isomorphic(g1: &Graph, g2: &Graph) -> bool {
     let mut g2 = g2.clone();
 
     // how many iterations of the relabeling-algorithm to do.
-    const N_ITERS: usize = 1;
+    const N_ITERS: usize = 2;
 
     for _ in 0..N_ITERS {
         // do a relabelling iteration

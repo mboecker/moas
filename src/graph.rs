@@ -2,6 +2,7 @@ use crate::prelude::Matrix;
 use serde::Serialize;
 use std::collections::{BTreeMap, HashSet};
 use std::hash::{Hash, Hasher};
+use std::io::Write;
 
 /// Represents a molecular graph.
 /// size_of = 16 + 8 * n + 16 * 4 * n bit
@@ -146,27 +147,29 @@ impl Graph {
     /// Misses the first and last line (graph { and }).
     /// You can specify if you want the node ids to start from a different number than 0
     /// and if you want to replace element numbers with their abbreviated element name.
-    pub fn dump(&self, offset: usize, use_element_names: bool) {
+    pub fn dump(&self, mut f: impl Write, offset: usize, use_element_names: bool) -> std::io::Result<()> {
         for (i, j) in self.atoms.iter().enumerate() {
             if use_element_names {
                 let label = get_element_label_from_element_id(j);
-                println!(r#"  {} [shape=circle, label="{}"];"#, i + offset, label);
+                writeln!(f, r#"  {} [shape=circle, label="{}"];"#, i + offset, label)?;
             } else {
-                println!(r#"  {} [shape=circle, label="{}"];"#, i + offset, j);
+                writeln!(f, r#"  {} [shape=circle, label="{}"];"#, i + offset, j)?;
             }
         }
 
         for j in 0..self.size() as usize {
             for i in 0..j {
                 for _ in 0..*self.bonds.get(i as usize, j as usize) {
-                    println!(
+                    writeln!(f, 
                         r#"  {} -- {} [type=s, splines=none];"#,
                         i + offset,
                         j + offset
-                    );
+                    )?;
                 }
             }
         }
+
+        std::io::Result::Ok(())
     }
 
     /// Provides an iterator over the elements of this graph that are adjacent to the given node.
@@ -203,41 +206,32 @@ impl Graph {
 
         other
     }
+
+    pub fn is_interesting(&self) -> usize {
+        (0..self.size()).map(|i| self.neighbors(i).count()).sum()
+    }
 }
 
 impl Hash for Graph {
     fn hash<H: Hasher>(&self, state: &mut H) {
         // This function must result in the same hash for equal (isomorph) graphs.
 
-        let element_id = |i| match i {
-            1 => 0,
-            6 => 1,
-            7 => 2,
-            8 => 3,
-            15 => 4,
-            16 => 5,
-            _ => 6,
-        };
-
         // Sum up the element ids (associative, so the ordering of the atoms doesnt matter).
-        {
-            let label_counts = self.label_counts();
-            for p in label_counts {
-                p.hash(state);
-            }
-        }
+        self.label_counts().iter().for_each(|p| p.hash(state));
 
         // Sum up the element ids (associative, so the ordering of the atoms doesnt matter).
         {
             use itertools::Itertools;
 
-            let mut counts: Matrix<usize> = Matrix::new(7);
+            let mut counts: BTreeMap<(usize, usize), usize> = BTreeMap::new();
 
             for (i, j) in (0..self.size()).tuple_combinations().filter(|(i, j)| i < j) {
-                let element1 = self.atoms()[i];
-                let element2 = self.atoms()[j];
-                *counts.get_mut(element_id(element1), element_id(element2)) +=
-                    *self.bonds.get(i, j) as usize;
+                let mut element1 = self.atoms()[i];
+                let mut element2 = self.atoms()[j];
+                if element1 > element2 {
+                    std::mem::swap(&mut element1, &mut element2);
+                }
+                *counts.entry((element1, element2)).or_default() += 1;
             }
 
             counts.hash(state);

@@ -4,7 +4,6 @@ use crate::attach;
 use rayon::prelude::*;
 use std::collections::HashMap;
 use std::collections::HashSet;
-use flamer::flame;
 
 use crate::subgraphs;
 use crate::Graph;
@@ -23,20 +22,20 @@ impl Default for Queue {
     }
 }
 
-#[flame]
 pub fn assemble(subgraphs: HashMap<Graph, usize>) -> HashSet<Graph> {
-    let mut q = Queue::default();
 
-    let mut blueprint = subgraphs.clone();
-
-    for sg in subgraphs.keys() {
-        let mut sub_subgraphs = blueprint.clone();
-        *sub_subgraphs.get_mut(&sg).unwrap() -= 1;
-        if sub_subgraphs[&sg] == 0 {
-            sub_subgraphs.remove(&sg);
-        }
-        q.active.insert(State::new(sg.clone(), sub_subgraphs));
+    // print out the computed subgraphs.
+    {
+        let filename = "trace/subgraphs.dot";
+        let f = std::fs::File::create(filename).unwrap();
+        crate::prelude::dump_set(f, subgraphs.keys()).unwrap();
     }
+
+    let mut q = Queue::default();
+    let k = subgraphs.keys().next().unwrap().size();
+    let g = subgraphs.keys().max_by_key(|g| g.is_interesting()).unwrap().clone();
+    let used = subgraphs::count_subgraphs(&g, &subgraphs::subgraphs(&g, k), k);
+    q.active.insert(State::new(g, used));
 
     inner(&subgraphs, &mut q);
     q.passive
@@ -47,7 +46,20 @@ pub fn assemble(subgraphs: HashMap<Graph, usize>) -> HashSet<Graph> {
 }
 
 fn inner(subgraphs: &HashMap<Graph, usize>, queue: &mut Queue) {
-    loop {
+    for iter in 0.. {
+        println!(
+            "iteration {}: {} active, {} passive states",
+            iter,
+            queue.active.len(),
+            queue.passive.len()
+        );
+
+        {
+            let filename = format!("trace/iter_{}.dot", iter);
+            let f = std::fs::File::create(filename).unwrap();
+            crate::prelude::dump_set(f, queue.active.iter().map(|s| &s.g)).unwrap();
+        }
+
         // Iterate over active states. These are states that should be further pursued.
         let new_queue: HashSet<_> = queue
             .active
@@ -62,47 +74,19 @@ fn inner(subgraphs: &HashMap<Graph, usize>, queue: &mut Queue) {
                     })
                     .flat_map(|(sg, _)| {
                         // Iterate over the different options to attach this subgraph.
-                        attach(&state.g, sg).into_iter().map(move |attachment| {
-                            let g = if attachment.new_node.is_none() {
-                                // only a new edge has been added
-                                let mapping: HashMap<_, _> =
-                                    attachment.mapping.iter().cloned().collect();
-                                let mut g = state.g.clone();
-                                for i in 0..sg.size() {
-                                    for j in 0..sg.size() {
-                                        let mi = mapping[&i];
-                                        let mj = mapping[&j];
-                                        *g.bonds_mut().get_mut(mi, mj) = *sg.bonds().get(i, j);
-                                    }
-                                }
-                                g
-                            } else {
-                                // a new node has been added
-                                // println!("adding new node");
-                                let mapping: HashMap<_, _> =
-                                    attachment.mapping.iter().cloned().collect();
-                                let new_node_sg_id = attachment.new_node.unwrap();
-                                let mut g = state.g.clone_with_extraspace(1);
-
-                                let j = new_node_sg_id;
-                                let mj = g.size() - 1;
-                                g.atoms_mut()[mj] = sg.atoms()[j];
-
-                                for i in 0..sg.size() {
-                                    if let Some(&mi) = mapping.get(&i) {
-                                        let v = *sg.bonds().get(i, j);
-                                        *g.bonds_mut().get_mut(mi, mj) = v;
-                                        *g.bonds_mut().get_mut(mj, mi) = v;
-                                    }
-                                }
-                                g
-                            };
-
+                        attach(&state.g, sg).into_iter().filter_map(move |attachment| {
+                            let g = crate::attachment::graph(&state.g, sg, attachment);
                             let k = sg.size();
                             let used_subgraphs =
                                 subgraphs::count_subgraphs(&g, &subgraphs::subgraphs(&g, k), k);
 
-                            State::new(g, used_subgraphs)
+                            for (k, v) in &used_subgraphs {
+                                if subgraphs.get(k).unwrap_or(&0) < v {
+                                    return None;
+                                }
+                            }
+
+                            Some(State::new(g, used_subgraphs))
                         })
                     })
                     .collect::<HashSet<_>>()
@@ -111,20 +95,20 @@ fn inner(subgraphs: &HashMap<Graph, usize>, queue: &mut Queue) {
             .collect();
 
         queue.passive.extend(queue.active.drain());
-        for state in new_queue.into_iter() {
-            if !queue.passive.contains(&state) {
-                queue.active.insert(state);
-            }
+
+        if new_queue.is_empty() {
+            return;
         }
 
-        println!(
-            "{:?} active, {:?} passive states",
-            queue.active.len(),
-            queue.passive.len()
-        );
-
-        if queue.active.is_empty() {
-            return;
+        let max_interest = new_queue.iter().map(|s| s.g.is_interesting()).max().unwrap();
+        for state in new_queue.into_iter() {
+            if !queue.passive.contains(&state) {
+                if state.g.is_interesting() == max_interest {
+                    queue.active.insert(state);
+                } else {
+                    queue.passive.insert(state);
+                }
+            }
         }
     }
 }

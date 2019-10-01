@@ -1,3 +1,5 @@
+use std::io::Write;
+use crate::Graph;
 use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
@@ -26,4 +28,15 @@ impl<T> Matrix<T> {
     pub fn get_mut(&mut self, i: usize, j: usize) -> &mut T {
         &mut self.d[i + j * self.size]
     }
+}
+
+pub fn dump_set<'a>(mut out: impl Write, set: impl Iterator<Item=&'a Graph>) -> std::io::Result<()> {
+    let mut i = 0;
+    writeln!(out, "graph set {{")?;
+    for g in set {
+        g.dump(&mut out, i, true)?;
+        i += g.size();
+    }
+    writeln!(out, "}}")?;
+    std::io::Result::Ok(())
 }
