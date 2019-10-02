@@ -1,6 +1,6 @@
-use std::io::Write;
 use crate::Graph;
 use serde::Serialize;
+use std::io::Write;
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
 pub struct Matrix<T> {
@@ -30,7 +30,10 @@ impl<T> Matrix<T> {
     }
 }
 
-pub fn dump_set<'a>(mut out: impl Write, set: impl Iterator<Item=&'a Graph>) -> std::io::Result<()> {
+pub fn dump_set<'a>(
+    mut out: impl Write,
+    set: impl Iterator<Item = &'a Graph>,
+) -> std::io::Result<()> {
     let mut i = 0;
     writeln!(out, "graph set {{")?;
     for g in set {

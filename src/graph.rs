@@ -23,7 +23,7 @@ impl Graph {
     pub fn with_size(n: usize) -> Graph {
         let atoms = vec![0usize; n];
         let bonds: Matrix<u8> = Matrix::new(n);
-        Graph { n: n, atoms, bonds }
+        Graph { n, atoms, bonds }
     }
 
     pub fn new(json: impl AsRef<str>) -> Graph {
@@ -54,7 +54,7 @@ impl Graph {
             *bonds.get_mut(j, i) = k;
         }
 
-        Graph { n: n, atoms, bonds }
+        Graph { n, atoms, bonds }
     }
 
     pub fn debug_print(&self) {
@@ -147,7 +147,12 @@ impl Graph {
     /// Misses the first and last line (graph { and }).
     /// You can specify if you want the node ids to start from a different number than 0
     /// and if you want to replace element numbers with their abbreviated element name.
-    pub fn dump(&self, mut f: impl Write, offset: usize, use_element_names: bool) -> std::io::Result<()> {
+    pub fn dump(
+        &self,
+        mut f: impl Write,
+        offset: usize,
+        use_element_names: bool,
+    ) -> std::io::Result<()> {
         for (i, j) in self.atoms.iter().enumerate() {
             if use_element_names {
                 let label = get_element_label_from_element_id(j);
@@ -160,7 +165,8 @@ impl Graph {
         for j in 0..self.size() as usize {
             for i in 0..j {
                 for _ in 0..*self.bonds.get(i as usize, j as usize) {
-                    writeln!(f, 
+                    writeln!(
+                        f,
                         r#"  {} -- {} [type=s, splines=none];"#,
                         i + offset,
                         j + offset
@@ -209,6 +215,11 @@ impl Graph {
 
     pub fn is_interesting(&self) -> usize {
         (0..self.size()).map(|i| self.neighbors(i).count()).sum()
+    }
+
+    /// Determines if this graph is one big circle.
+    pub fn is_circular(&self) -> bool {
+        (0..self.size()).all(|i| self.neighbors(i).count() >= 2)
     }
 }
 

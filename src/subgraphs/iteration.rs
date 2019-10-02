@@ -8,14 +8,11 @@ pub fn combine(g: &Graph, parts: &[usize], k: usize) -> Vec<usize> {
 
     // Iterate over subgraphs
     for chunk in parts.chunks(k - 1) {
-
         // Iterate over nodes in the subgraph
         for current in chunk {
-
             // Iterate over adjacent nodes in the graph that are not already in the subgraph.
             for neighbor in g.neighbors(*current) {
                 if !chunk.contains(&neighbor) {
-
                     // New subgraph detected
                     let mut v = Vec::with_capacity(k);
                     v.extend_from_slice(&chunk);
@@ -44,7 +41,7 @@ pub fn subgraphs(g: &Graph, k: usize) -> Vec<usize> {
     } else {
         // Generate parts with size one less.
         let parts = subgraphs(g, k - 1);
-        
+
         // Combine them to make larger subgraphs.
         combine(g, &parts, k)
     }

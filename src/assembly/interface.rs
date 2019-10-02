@@ -23,7 +23,6 @@ impl Default for Queue {
 }
 
 pub fn assemble(subgraphs: HashMap<Graph, usize>) -> HashSet<Graph> {
-
     // print out the computed subgraphs.
     {
         let filename = "trace/subgraphs.dot";
@@ -33,7 +32,11 @@ pub fn assemble(subgraphs: HashMap<Graph, usize>) -> HashSet<Graph> {
 
     let mut q = Queue::default();
     let k = subgraphs.keys().next().unwrap().size();
-    let g = subgraphs.keys().max_by_key(|g| g.is_interesting()).unwrap().clone();
+    let g = subgraphs
+        .keys()
+        .max_by_key(|g| g.is_interesting())
+        .unwrap()
+        .clone();
     let used = subgraphs::count_subgraphs(&g, &subgraphs::subgraphs(&g, k), k);
     q.active.insert(State::new(g, used));
 
@@ -74,20 +77,22 @@ fn inner(subgraphs: &HashMap<Graph, usize>, queue: &mut Queue) {
                     })
                     .flat_map(|(sg, _)| {
                         // Iterate over the different options to attach this subgraph.
-                        attach(&state.g, sg).into_iter().filter_map(move |attachment| {
-                            let g = crate::attachment::graph(&state.g, sg, attachment);
-                            let k = sg.size();
-                            let used_subgraphs =
-                                subgraphs::count_subgraphs(&g, &subgraphs::subgraphs(&g, k), k);
+                        attach(&state.g, sg)
+                            .into_iter()
+                            .filter_map(move |attachment| {
+                                let g = crate::attachment::graph(&state.g, sg, attachment);
+                                let k = sg.size();
+                                let used_subgraphs =
+                                    subgraphs::count_subgraphs(&g, &subgraphs::subgraphs(&g, k), k);
 
-                            for (k, v) in &used_subgraphs {
-                                if subgraphs.get(k).unwrap_or(&0) < v {
-                                    return None;
+                                for (k, v) in &used_subgraphs {
+                                    if subgraphs.get(k).unwrap_or(&0) < v {
+                                        return None;
+                                    }
                                 }
-                            }
 
-                            Some(State::new(g, used_subgraphs))
-                        })
+                                Some(State::new(g, used_subgraphs))
+                            })
                     })
                     .collect::<HashSet<_>>()
                     .into_par_iter()
@@ -100,7 +105,11 @@ fn inner(subgraphs: &HashMap<Graph, usize>, queue: &mut Queue) {
             return;
         }
 
-        let max_interest = new_queue.iter().map(|s| s.g.is_interesting()).max().unwrap();
+        let max_interest = new_queue
+            .iter()
+            .map(|s| s.g.is_interesting())
+            .max()
+            .unwrap();
         for state in new_queue.into_iter() {
             if !queue.passive.contains(&state) {
                 if state.g.is_interesting() == max_interest {
