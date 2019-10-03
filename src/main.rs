@@ -2,7 +2,6 @@
 extern crate test;
 
 use rusqlite::{Connection, NO_PARAMS};
-use std::hash::{Hash, Hasher};
 
 mod prelude;
 
@@ -29,13 +28,6 @@ struct CompoundEntry {
     pub is_contiguous: bool,
     pub atoms: i64,
     pub bonds: i64,
-}
-
-fn calculate_hash<T: Hash>(t: &T) -> u64 {
-    use std::collections::hash_map::DefaultHasher;
-    let mut s = DefaultHasher::new();
-    t.hash(&mut s);
-    s.finish()
 }
 
 fn main() {
