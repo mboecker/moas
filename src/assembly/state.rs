@@ -5,14 +5,14 @@ use std::hash::Hash;
 use std::hash::Hasher;
 
 #[derive(Eq, PartialEq, Debug, Clone)]
-pub(super) struct State {
+pub(super) struct State<S> {
     pub g: Graph,
-    pub used: HashMap<Graph, usize>,
+    pub used: S,
     hash: u64,
 }
 
-impl State {
-    pub fn new(g: Graph, used: HashMap<Graph, usize>) -> State {
+impl State<HashMap<Graph, usize>> {
+    pub fn new(g: Graph, used: HashMap<Graph, usize>) -> State<HashMap<Graph, usize>> {
         assert!(used.values().all(|x| x > &0));
         let hash = Self::hash(&g, used.iter());
         State { g, used, hash }
@@ -50,7 +50,7 @@ impl State {
     }
 }
 
-impl Hash for State {
+impl<S> Hash for State<S> {
     fn hash<H>(&self, h: &mut H)
     where
         H: Hasher,

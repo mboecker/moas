@@ -10,8 +10,8 @@ use crate::Graph;
 
 #[derive(Debug)]
 struct Queue {
-    pub active: HashSet<State>,
-    pub passive: HashSet<State>,
+    pub active: HashSet<State<HashMap<Graph, usize>>>,
+    pub passive: HashSet<State<HashMap<Graph, usize>>>,
 }
 
 impl Default for Queue {
