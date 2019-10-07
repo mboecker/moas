@@ -14,4 +14,4 @@ pub use self::complex::complex_subgraphs;
 pub use self::complex::Subgraphs;
 pub use self::count::count_subgraphs;
 pub use self::iteration::combine;
-pub use self::iteration::subgraphs;
+pub use self::iteration::get_all;

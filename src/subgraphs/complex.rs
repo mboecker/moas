@@ -13,7 +13,7 @@ pub struct Subgraphs {
 pub fn complex_subgraphs(g: &Graph) -> Subgraphs {
     let atoms = g.label_counts();
 
-    let subgraphs = super::subgraphs(g, 4);
+    let subgraphs = super::get_all(g, 4);
     let rings5 = super::combine(g, &subgraphs, 5);
     let rings6 = super::combine(g, &rings5, 6);
 

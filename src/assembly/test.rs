@@ -11,7 +11,7 @@ fn test_assembly(structure: &str, k: usize) {
         g.dump(f, 0, true).unwrap();
     }
 
-    let sg = subgraphs::subgraphs(&g, k);
+    let sg = subgraphs::get_all(&g, k);
     let sg = subgraphs::count_subgraphs(&g, &sg, k);
     let gs = assemble(sg);
     assert!(gs.contains(&g));

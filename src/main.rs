@@ -15,7 +15,6 @@ mod graph;
 use graph::Graph;
 
 mod subgraphs;
-use subgraphs::subgraphs;
 
 mod isomorphism;
 use isomorphism::are_isomorphic;
@@ -51,7 +50,7 @@ fn main() {
         let g = graph::Graph::new(x.structure);
 
         // determine the graphs' subgraphs.
-        let sg = subgraphs::subgraphs(&g, 7);
+        let sg = subgraphs::get_all(&g, 7);
         let sg = subgraphs::count_subgraphs(&g, &sg, 7);
 
         // re-assemble the graph
