@@ -1,8 +1,9 @@
 use super::assemble;
 use crate::subgraphs;
+use crate::subgraphs::Subgraphs;
 use crate::Graph;
 
-fn test_assembly(structure: &str, k: usize) {
+fn test_assembly(structure: &str, _: usize) {
     let g = Graph::new(structure);
 
     {
@@ -11,8 +12,7 @@ fn test_assembly(structure: &str, k: usize) {
         g.dump(f, 0, true).unwrap();
     }
 
-    let sg = subgraphs::subgraphs(&g, k);
-    let sg = subgraphs::count_subgraphs(&g, &sg, k);
+    let sg = subgraphs::variants::Only4::new(&g);
     let gs = assemble(sg);
     assert!(gs.contains(&g));
     {

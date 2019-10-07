@@ -1,7 +1,8 @@
 mod base_case;
-mod complex;
+pub mod variants;
 mod count;
 mod iteration;
+mod r#trait;
 
 #[cfg(test)]
 mod test;
@@ -10,8 +11,7 @@ mod test;
 mod bench;
 
 pub use self::base_case::subgraphs3;
-pub use self::complex::complex_subgraphs;
-pub use self::complex::Subgraphs;
 pub use self::count::count_subgraphs;
 pub use self::iteration::combine;
 pub use self::iteration::subgraphs;
+pub use self::r#trait::Subgraphs;

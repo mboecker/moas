@@ -219,7 +219,7 @@ impl Graph {
 
     /// Determines if this graph is one big circle.
     pub fn is_circular(&self) -> bool {
-        (0..self.size()).all(|i| self.neighbors(i).count() >= 2)
+        (0..self.size()).all(|i| self.neighbors(i).count() == 2)
     }
 }
 

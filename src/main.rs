@@ -4,20 +4,15 @@ extern crate test;
 use rusqlite::{Connection, NO_PARAMS};
 
 mod prelude;
-
 mod assembly;
-use assembly::assemble;
-
 mod attachment;
-use attachment::attach;
-
 mod graph;
-use graph::Graph;
-
 mod subgraphs;
-use subgraphs::subgraphs;
-
 mod isomorphism;
+
+use assembly::assemble;
+use graph::Graph;
+use subgraphs::subgraphs;
 use isomorphism::are_isomorphic;
 
 #[derive(Debug)]
@@ -48,11 +43,12 @@ fn main() {
         .map(|x| x.unwrap());
 
     for x in iter {
+        use crate::subgraphs::Subgraphs;
+
         let g = graph::Graph::new(x.structure);
 
         // determine the graphs' subgraphs.
-        let sg = subgraphs::subgraphs(&g, 7);
-        let sg = subgraphs::count_subgraphs(&g, &sg, 7);
+        let sg = subgraphs::variants::SubgraphsAndRings::new(&g);
 
         // re-assemble the graph
         let g = assemble(sg);
