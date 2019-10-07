@@ -21,7 +21,7 @@ impl subgraphs::Subgraphs for SubgraphsAndRings {
             (g,c)
         }).collect();
 
-        let subgraphs = subgraphs::subgraphs(g, 4);
+        let subgraphs = subgraphs::get_all(g, 4);
 
         let rings5 = if g.size() > 5 {
             subgraphs::combine(g, &subgraphs, 5)
@@ -59,6 +59,10 @@ impl subgraphs::Subgraphs for SubgraphsAndRings {
         } else {
             self.subgraphs.keys().next().unwrap().clone()
         }
+    }
+
+    fn is_subset_of(&self, other: &Self) -> bool {
+        true
     }
 
     fn basic_subgraphs<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=&'a Graph>> {

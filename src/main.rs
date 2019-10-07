@@ -10,9 +10,9 @@ mod graph;
 mod subgraphs;
 mod isomorphism;
 
+use attachment::attach;
 use assembly::assemble;
 use graph::Graph;
-use subgraphs::subgraphs;
 use isomorphism::are_isomorphic;
 
 #[derive(Debug)]

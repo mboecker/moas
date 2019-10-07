@@ -11,8 +11,8 @@ pub struct Only4 {
 
 impl subgraphs::Subgraphs for Only4 {
     fn new(g: &Graph) -> Self {
-        assert!(g.size() > 4);
-        let subgraphs = subgraphs::subgraphs(g, 4);
+        assert!(g.size() >= 4);
+        let subgraphs = subgraphs::get_all(g, 4);
         let subgraphs = subgraphs::count_subgraphs(g, &subgraphs, 4);
         Only4 {
             subgraphs,
@@ -21,6 +21,10 @@ impl subgraphs::Subgraphs for Only4 {
 
     fn select_starting_graph(&self) -> Graph {
         self.subgraphs.keys().next().unwrap().clone()
+    }
+
+    fn is_subset_of(&self, other: &Self) -> bool {
+        true
     }
 
     fn basic_subgraphs<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=&'a Graph>> {
