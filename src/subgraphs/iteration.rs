@@ -32,7 +32,7 @@ pub fn combine(g: &Graph, parts: &[usize], k: usize) -> Vec<usize> {
     v
 }
 
-pub fn subgraphs(g: &Graph, k: usize) -> Vec<usize> {
+pub fn get_all(g: &Graph, k: usize) -> Vec<usize> {
     if k < 3 {
         panic!("subgraphs <3 not supported");
     } else if k == 3 {
@@ -40,7 +40,7 @@ pub fn subgraphs(g: &Graph, k: usize) -> Vec<usize> {
         subgraphs3(g)
     } else {
         // Generate parts with size one less.
-        let parts = subgraphs(g, k - 1);
+        let parts = get_all(g, k - 1);
 
         // Combine them to make larger subgraphs.
         combine(g, &parts, k)

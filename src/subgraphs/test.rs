@@ -1,5 +1,5 @@
 use crate::graph::Graph;
-use crate::subgraphs::subgraphs;
+use crate::subgraphs::get_all;
 use crate::subgraphs::subgraphs3;
 
 #[test]
@@ -13,7 +13,7 @@ fn test_subgraphs3_smol() {
     println!("{:?}", sg);
 
     let k = 4;
-    let sg4 = subgraphs(&g, k);
+    let sg4 = get_all(&g, k);
     for chunk in &sg4.into_iter().chunks(k) {
         println!("{:?}", chunk.collect::<Vec<usize>>());
     }
@@ -35,7 +35,7 @@ fn test_subgraphs4() {
     let j = r#"{"atoms": [[1, 1], [2,2], [3,3], [4,4], [5,5]],
                 "bonds": [[1,2,1], [1,3,1], [2,3,1], [2,5,1], [3,4,1], [4,5,1]] }"#;
     let g = Graph::new(j);
-    let sg = subgraphs(&g, 4);
+    let sg = get_all(&g, 4);
 
     for chunk in &sg.into_iter().chunks(4) {
         println!("{:?}", chunk.collect::<Vec<usize>>());
@@ -49,7 +49,7 @@ fn test_subgraphs4_2() {
     let j = r#"{"atoms": [[1, 1], [2,2], [3,3], [4,4], [5,5]],
                 "bonds": [[1,2,1], [1,3,1], [3,4,1], [4,5,1]] }"#;
     let g = Graph::new(j);
-    let sg = subgraphs(&g, 4);
+    let sg = get_all(&g, 4);
 
     for chunk in &sg.into_iter().chunks(4) {
         println!("{:?}", chunk.collect::<Vec<usize>>());
@@ -63,7 +63,7 @@ fn test_subgraphs5() {
     let j = r#"{"atoms": [[1, 1], [2,2], [3,3], [4,4], [5,5]],
                 "bonds": [[1,2,1], [1,3,1], [2,3,1], [2,5,1], [3,4,1], [4,5,1]] }"#;
     let g = Graph::new(j);
-    let sg = subgraphs(&g, 4);
+    let sg = get_all(&g, 4);
 
     for chunk in &sg.into_iter().chunks(4) {
         println!("{:?}", chunk.collect::<Vec<usize>>());
@@ -77,7 +77,7 @@ fn test_subgraphs4_large_graph() {
     let j = r#"{"atoms": [[1, 8], [2, 8], [3, 8], [4, 8], [5, 7], [6, 6], [7, 6], [8, 6], [9, 6], [10, 6], [11, 6], [12, 6], [13, 6], [14, 6], [15, 1], [16, 1], [17, 1], [18, 1], [19, 1], [20, 1], [21, 1], [22, 1], [23, 1], [24, 1], [25, 1], [26, 1], [27, 1], [28, 1], [29, 1], [30, 1], [31, 1]],
                 "bonds": [[1, 7, 1], [1, 13, 1], [2, 12, 1], [3, 12, 2], [4, 13, 2], [5, 6, 1], [5, 8, 1], [5, 9, 1], [5, 10, 1], [6, 7, 1], [6, 15, 1], [6, 16, 1], [7, 11, 1], [7, 17, 1], [8, 18, 1], [8, 19, 1], [8, 20, 1], [9, 21, 1], [9, 22, 1], [9, 23, 1], [10, 24, 1], [10, 25, 1], [10, 26, 1], [11, 12, 1], [11, 27, 1], [11, 28, 1], [13, 14, 1], [14, 29, 1], [14, 30, 1], [14, 31, 1]]}"#;
     let g = Graph::new(j);
-    let sg = subgraphs(&g, 4);
+    let sg = get_all(&g, 4);
 
     for chunk in &sg.into_iter().chunks(4) {
         println!("{:?}", chunk.collect::<Vec<usize>>());
@@ -91,7 +91,7 @@ fn test_subgraphs5_large_graph() {
     let j = r#"{"atoms": [[1, 8], [2, 8], [3, 8], [4, 8], [5, 7], [6, 6], [7, 6], [8, 6], [9, 6], [10, 6], [11, 6], [12, 6], [13, 6], [14, 6], [15, 1], [16, 1], [17, 1], [18, 1], [19, 1], [20, 1], [21, 1], [22, 1], [23, 1], [24, 1], [25, 1], [26, 1], [27, 1], [28, 1], [29, 1], [30, 1], [31, 1]],
                 "bonds": [[1, 7, 1], [1, 13, 1], [2, 12, 1], [3, 12, 2], [4, 13, 2], [5, 6, 1], [5, 8, 1], [5, 9, 1], [5, 10, 1], [6, 7, 1], [6, 15, 1], [6, 16, 1], [7, 11, 1], [7, 17, 1], [8, 18, 1], [8, 19, 1], [8, 20, 1], [9, 21, 1], [9, 22, 1], [9, 23, 1], [10, 24, 1], [10, 25, 1], [10, 26, 1], [11, 12, 1], [11, 27, 1], [11, 28, 1], [13, 14, 1], [14, 29, 1], [14, 30, 1], [14, 31, 1]]}"#;
     let g = Graph::new(j);
-    let sg = subgraphs(&g, 5);
+    let sg = get_all(&g, 5);
 
     for chunk in &sg.into_iter().chunks(5) {
         println!("{:?}", chunk.collect::<Vec<usize>>());
@@ -105,7 +105,7 @@ fn test_subgraphs10_large_graph() {
     let j = r#"{"atoms": [[1, 8], [2, 8], [3, 8], [4, 8], [5, 7], [6, 6], [7, 6], [8, 6], [9, 6], [10, 6], [11, 6], [12, 6], [13, 6], [14, 6], [15, 1], [16, 1], [17, 1], [18, 1], [19, 1], [20, 1], [21, 1], [22, 1], [23, 1], [24, 1], [25, 1], [26, 1], [27, 1], [28, 1], [29, 1], [30, 1], [31, 1]],
                 "bonds": [[1, 7, 1], [1, 13, 1], [2, 12, 1], [3, 12, 2], [4, 13, 2], [5, 6, 1], [5, 8, 1], [5, 9, 1], [5, 10, 1], [6, 7, 1], [6, 15, 1], [6, 16, 1], [7, 11, 1], [7, 17, 1], [8, 18, 1], [8, 19, 1], [8, 20, 1], [9, 21, 1], [9, 22, 1], [9, 23, 1], [10, 24, 1], [10, 25, 1], [10, 26, 1], [11, 12, 1], [11, 27, 1], [11, 28, 1], [13, 14, 1], [14, 29, 1], [14, 30, 1], [14, 31, 1]]}"#;
     let g = Graph::new(j);
-    let sg = subgraphs(&g, 6);
+    let sg = get_all(&g, 6);
 
     for chunk in &sg.into_iter().chunks(6) {
         println!("{:?}", chunk.collect::<Vec<usize>>());
@@ -120,7 +120,7 @@ fn test_subgraphs5_big_testgraph() {
                 "bonds": [[1,2,1], [1,5,1], [1,8,1], [2,3,1], [2,11,1], [3,4,1], [3,9,1], [4,5,1], [4,10,1], [5,6,1], [6,7,1], [7,8,1]] }"#;
     let g = Graph::new(j);
     for k in 3..=11 {
-        let sg = subgraphs(&g, k);
+        let sg = get_all(&g, k);
         for chunk in (&sg.into_iter().chunks(k)).into_iter() {
             println!("{:?}", chunk.collect::<Vec<usize>>());
         }
@@ -135,7 +135,7 @@ fn test_actual_subgraph() {
                 "bonds": [[1,2,1], [1,5,1], [1,8,1], [2,3,1], [2,11,1], [3,4,1], [3,9,1], [4,5,1], [4,10,1], [5,6,1], [6,7,1], [7,8,1]] }"#;
     let g = Graph::new(j);
     let k = 7;
-    let sg = subgraphs(&g, k);
+    let sg = get_all(&g, k);
     for subgraph in sg
         .into_iter()
         .chunks(k)
@@ -153,7 +153,7 @@ fn test_fake_benzol() {
     let j = r#"{"atoms": [[1, 1], [2, 2], [3, 3], [4,4], [5,5], [6,6]],
                 "bonds": [[1,2,1], [2,3,1], [3,4,1], [4,5,1], [5,6,1], [6,1,1]] }"#;
     let g = Graph::new(j);
-    let sg = subgraphs::subgraphs(&g, 3);
+    let sg = subgraphs::get_all(&g, 3);
 
     let data: Vec<_> = sg
         .chunks(3)
@@ -184,7 +184,7 @@ fn test_fake_benzol4() {
     let j = r#"{"atoms": [[1, 1], [2, 2], [3, 3], [4,4], [5,5]],
                 "bonds": [[1,2,1], [2,3,1], [3,4,1], [4,5,1], [5,1,1]] }"#;
     let g = Graph::new(j);
-    let sg = subgraphs::subgraphs(&g, 4);
+    let sg = subgraphs::get_all(&g, 4);
 
     let data: Vec<_> = sg
         .chunks(4)

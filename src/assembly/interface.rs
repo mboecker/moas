@@ -37,7 +37,7 @@ pub fn assemble(subgraphs: HashMap<Graph, usize>) -> HashSet<Graph> {
         .max_by_key(|g| g.is_interesting())
         .unwrap()
         .clone();
-    let used = subgraphs::count_subgraphs(&g, &subgraphs::subgraphs(&g, k), k);
+    let used = subgraphs::count_subgraphs(&g, &subgraphs::get_all(&g, k), k);
     q.active.insert(State::new(g, used));
 
     inner(&subgraphs, &mut q);
@@ -80,10 +80,10 @@ fn inner(subgraphs: &HashMap<Graph, usize>, queue: &mut Queue) {
                         attach(&state.g, sg)
                             .into_iter()
                             .filter_map(move |attachment| {
-                                let g = crate::attachment::graph(&state.g, sg, attachment);
+                                let g = crate::attachment::perform(&state.g, sg, attachment);
                                 let k = sg.size();
                                 let used_subgraphs =
-                                    subgraphs::count_subgraphs(&g, &subgraphs::subgraphs(&g, k), k);
+                                    subgraphs::count_subgraphs(&g, &subgraphs::get_all(&g, k), k);
 
                                 for (k, v) in &used_subgraphs {
                                     if subgraphs.get(k).unwrap_or(&0) < v {

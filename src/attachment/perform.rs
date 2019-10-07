@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use super::Result;
 use crate::Graph;
 
-pub fn graph(g: &Graph, sg: &Graph, attachment: Result) -> Graph {
+pub fn perform(g: &Graph, sg: &Graph, attachment: Result) -> Graph {
     if attachment.new_node.is_none() {
         // only a new edge has been added
         let mapping: HashMap<_, _> = attachment.mapping.into_iter().collect();
