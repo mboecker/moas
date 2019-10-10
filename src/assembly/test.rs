@@ -3,7 +3,7 @@ use crate::subgraphs;
 use crate::subgraphs::Subgraphs;
 use crate::Graph;
 
-fn test_assembly(structure: &str, _: usize) {
+fn test4(structure: &str) {
     let g = Graph::new(structure);
 
     {
@@ -13,6 +13,13 @@ fn test_assembly(structure: &str, _: usize) {
     }
 
     let sg = subgraphs::variants::Only4::new(&g);
+
+    {
+        let filename = "trace/subgraphs.dot";
+        let f = std::fs::File::create(filename).unwrap();
+        crate::prelude::dump_set(f, sg.all_subgraphs()).unwrap();
+    }
+
     let gs = assemble(sg);
     assert!(gs.contains(&g));
     {
@@ -22,10 +29,40 @@ fn test_assembly(structure: &str, _: usize) {
     }
 }
 
+fn test_rings(structure: &str) {
+    let g = Graph::new(structure);
+
+    {
+        let filename = "trace/original.dot";
+        let f = std::fs::File::create(filename).unwrap();
+        g.dump(f, 0, true).unwrap();
+    }
+
+    let sg = subgraphs::variants::SubgraphsAndRings::new(&g);
+
+    {
+        let filename = "trace/subgraphs.dot";
+        let f = std::fs::File::create(filename).unwrap();
+        crate::prelude::dump_set(f, sg.all_subgraphs()).unwrap();
+    }
+
+    let gs = assemble(sg);
+    assert!(gs.contains(&g));
+    {
+        let filename = "trace/result.dot";
+        let f = std::fs::File::create(filename).unwrap();
+        crate::prelude::dump_set(f, gs.iter()).unwrap();
+    }
+}
+
+fn test_assembly(structure: &str, _: usize) {
+    test_rings(structure);
+}
+
 #[test]
 #[ignore]
 fn dioxaziridine() {
-    let j = r#"{"atoms": [[1, 2], [2,2], [3,3], [4,1]],
+    let j = r#"{"atoms": [[1, 8], [2,8], [3,6], [4,1]],
                 "bonds": [[1,2,1], [2,3,1], [1,3,1], [3,4,1]] }"#;
     test_assembly(j, 3);
 }

@@ -39,7 +39,14 @@ where
     }
 
     pub fn assemble(mut self) -> HashSet<Graph> {
-        loop {
+        for iter in 0.. {
+
+            {
+                let filename = format!("trace/iter_{}.dot", iter);
+                let f = std::fs::File::create(filename).unwrap();
+                crate::prelude::dump_set(f, self.q_active.iter().map(|s| &s.g)).unwrap();
+            }
+
             // Assemble current active graphs into new graphs.
             let new_queue = self.iterate();
 
@@ -49,6 +56,8 @@ where
             if new_queue.is_empty() {
                 break;
             }
+
+            self.q_active = new_queue;
         }
 
         let subgraphs = self.subgraphs;
@@ -73,7 +82,7 @@ where
     fn explore_state(&self, state: &State<S>) -> impl Iterator<Item=State<S>> {
         // Iterate over all the subgraphs that are still available.
         self.subgraphs
-            .basic_subgraphs()
+            .attachable_subgraphs()
             .flat_map(|sg| {
                 // Iterate over the different options to attach this subgraph.
                 crate::attach(&state.g, sg)

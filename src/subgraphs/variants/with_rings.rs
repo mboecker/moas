@@ -14,7 +14,7 @@ pub struct SubgraphsAndRings {
 
 impl subgraphs::Subgraphs for SubgraphsAndRings {
     fn new(g: &Graph) -> Self {
-        assert!(g.size() > 4);
+        assert!(g.size() >= 4);
         let atoms = g.label_counts().into_iter().map(|(i,c)| {
             let mut g = Graph::with_size(1);
             g.atoms_mut()[0] = i;
@@ -23,13 +23,13 @@ impl subgraphs::Subgraphs for SubgraphsAndRings {
 
         let subgraphs = subgraphs::get_all(g, 4);
 
-        let rings5 = if g.size() > 5 {
+        let rings5 = if g.size() >= 5 {
             subgraphs::combine(g, &subgraphs, 5)
         } else {
             Vec::new()
         };
 
-        let rings6 = if g.size() > 5 {
+        let rings6 = if g.size() >= 6 {
             subgraphs::combine(g, &rings5, 6)
         } else {
             Vec::new()
@@ -62,10 +62,36 @@ impl subgraphs::Subgraphs for SubgraphsAndRings {
     }
 
     fn is_subset_of(&self, other: &Self) -> bool {
+        // self is supposed to be a subset of other.
+        // therefore, if self contains any subgraphs that are not contained in other,
+        // or contains more of said subgraphs, its not a subset.
+
+        for (k, v) in self.rings6.iter() {
+            if other.rings6.get(k).unwrap_or(&0) < v {
+                return false;
+            }
+        }
+
+        for (k, v) in self.rings5.iter() {
+            if other.rings5.get(k).unwrap_or(&0) < v {
+                return false;
+            }
+        }
+
+        for (k, v) in self.subgraphs.iter() {
+            if other.subgraphs.get(k).unwrap_or(&0) < v {
+                return false;
+            }
+        }
+
         true
     }
 
-    fn basic_subgraphs<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=&'a Graph>> {
+    fn all_subgraphs<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=&'a Graph>> {
+        Box::new(self.rings6.keys().chain(self.rings5.keys()).chain(self.subgraphs.keys()))
+    }
+
+    fn attachable_subgraphs<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=&'a Graph>> {
         Box::new(self.subgraphs.keys())
     }
 }

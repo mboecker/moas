@@ -14,6 +14,7 @@ impl subgraphs::Subgraphs for Only4 {
         assert!(g.size() >= 4);
         let subgraphs = subgraphs::get_all(g, 4);
         let subgraphs = subgraphs::count_subgraphs(g, &subgraphs, 4);
+
         Only4 {
             subgraphs,
         }
@@ -24,10 +25,24 @@ impl subgraphs::Subgraphs for Only4 {
     }
 
     fn is_subset_of(&self, other: &Self) -> bool {
+
+        // self is supposed to be a subset of other.
+        // therefore, if self contains any subgraphs that are not contained in other,
+        // or contains more of said subgraphs, its not a subset.
+
+        for (k, v) in self.subgraphs.iter() {
+            if other.subgraphs.get(k).unwrap_or(&0) < v {
+                return false;
+            }
+        }
         true
     }
 
-    fn basic_subgraphs<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=&'a Graph>> {
+    fn all_subgraphs<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=&'a Graph>> {
+        Box::new(self.subgraphs.keys())
+    }
+
+    fn attachable_subgraphs<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=&'a Graph>> {
         Box::new(self.subgraphs.keys())
     }
 }
