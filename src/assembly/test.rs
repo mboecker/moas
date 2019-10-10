@@ -3,39 +3,45 @@ use crate::subgraphs;
 use crate::subgraphs::Subgraphs;
 use crate::Graph;
 
-fn test4(structure: &str) {
-    let g = Graph::new(structure);
+// fn test4(structure: &str) {
+//     let g = Graph::new(structure);
 
-    {
-        let filename = "trace/original.dot";
-        let f = std::fs::File::create(filename).unwrap();
-        g.dump(f, 0, true).unwrap();
-    }
+//     {
+//         use std::io::Write;
+//         let filename = "trace/original.dot";
+//         let mut f = std::fs::File::create(filename).unwrap();
+//         writeln!(&mut f, "graph g {{").unwrap();
+//         g.dump(&mut f, 0, true).unwrap();
+//         writeln!(&mut f, "}}").unwrap();
+//     }
 
-    let sg = subgraphs::variants::Only4::new(&g);
+//     let sg = subgraphs::variants::Only4::new(&g);
 
-    {
-        let filename = "trace/subgraphs.dot";
-        let f = std::fs::File::create(filename).unwrap();
-        crate::prelude::dump_set(f, sg.all_subgraphs()).unwrap();
-    }
+//     {
+//         let filename = "trace/subgraphs.dot";
+//         let f = std::fs::File::create(filename).unwrap();
+//         crate::prelude::dump_set(f, sg.all_subgraphs()).unwrap();
+//     }
 
-    let gs = assemble(sg);
-    assert!(gs.contains(&g));
-    {
-        let filename = "trace/result.dot";
-        let f = std::fs::File::create(filename).unwrap();
-        crate::prelude::dump_set(f, gs.iter()).unwrap();
-    }
-}
+//     let gs = assemble(sg);
+//     assert!(gs.contains(&g));
+//     {
+//         let filename = "trace/result.dot";
+//         let f = std::fs::File::create(filename).unwrap();
+//         crate::prelude::dump_set(f, gs.iter()).unwrap();
+//     }
+// }
 
 fn test_rings(structure: &str) {
     let g = Graph::new(structure);
 
     {
+        use std::io::Write;
         let filename = "trace/original.dot";
-        let f = std::fs::File::create(filename).unwrap();
-        g.dump(f, 0, true).unwrap();
+        let mut f = std::fs::File::create(filename).unwrap();
+        writeln!(&mut f, "graph g {{").unwrap();
+        g.dump(&mut f, 0, true).unwrap();
+        writeln!(&mut f, "}}").unwrap();
     }
 
     let sg = subgraphs::variants::SubgraphsAndRings::new(&g);

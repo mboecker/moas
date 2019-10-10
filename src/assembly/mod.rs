@@ -13,6 +13,6 @@ mod run;
 mod test;
 
 pub fn assemble<S: Subgraphs + Eq + Hash>(s: S) -> HashSet<Graph> {
-    let mut r = self::run::Run::new(s);
+    let r = self::run::Run::new(s);
     r.assemble()
 }
