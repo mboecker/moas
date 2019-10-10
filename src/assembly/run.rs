@@ -88,9 +88,15 @@ where
                 crate::attach(&state.g, sg)
                     .into_iter()
                     .filter_map(move |attachment| {
+
+                        // Actually perform the attachment and create a graph.
                         let g = crate::attachment::perform(&state.g, sg, attachment);
+
+                        // Calculate newly used subgraphs.
                         let used_subgraphs = S::new(&g);
 
+                        // Check, if by attaching this subgraph in this way,
+                        // we used more subgraphs than we're allowed to.
                         if used_subgraphs.is_subset_of(&self.subgraphs) {
                             Some(State::new(g, used_subgraphs))
                         } else {
