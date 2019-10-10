@@ -214,7 +214,7 @@ impl Graph {
     }
 
     pub fn is_interesting(&self) -> usize {
-        (0..self.size()).map(|i| self.neighbors(i).count()).sum()
+        self.bonds().sum()
     }
 
     /// Determines if this graph is one big circle.

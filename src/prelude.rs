@@ -1,6 +1,7 @@
 use crate::Graph;
 use serde::Serialize;
 use std::io::Write;
+use std::iter::Sum;
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
 pub struct Matrix<T> {
@@ -27,6 +28,12 @@ impl<T> Matrix<T> {
 
     pub fn get_mut(&mut self, i: usize, j: usize) -> &mut T {
         &mut self.d[i + j * self.size]
+    }
+}
+
+impl Matrix<u8> {
+    pub fn sum(&self) -> usize {
+        self.d.iter().map(|x| *x as usize).sum()
     }
 }
 

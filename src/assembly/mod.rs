@@ -12,7 +12,7 @@ mod run;
 #[cfg(test)]
 mod test;
 
-pub fn assemble<S: Subgraphs + Eq + Hash>(s: S) -> HashSet<Graph> {
+pub fn assemble<S: Subgraphs + Eq + Hash + Send + Sync>(s: S) -> HashSet<Graph> {
     let r = self::run::Run::new(s);
     r.assemble()
 }

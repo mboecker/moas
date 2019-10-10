@@ -3,6 +3,7 @@ use crate::Graph;
 use crate::subgraphs::Subgraphs;
 use std::collections::HashSet;
 use std::hash::Hash;
+use rayon::prelude::*;
 
 pub struct Run<S>
 where
@@ -20,16 +21,17 @@ where
 
 impl<S> Run<S>
 where
-    S: Subgraphs + Eq + Hash,
+    S: Subgraphs + Eq + Hash + Send + Sync,
 {
     pub fn new(subgraphs: S) -> Run<S> {
-        let mut q_active = HashSet::new();
+        // Generate inital state.
         let g = subgraphs.select_starting_graph();
         let sg = S::new(&g);
         let state = State::new(g, sg);
-        q_active.insert(state);
 
         let q_passive = HashSet::new();
+        let mut q_active = HashSet::new();
+        q_active.insert(state);
 
         Run {
             subgraphs,
@@ -57,7 +59,9 @@ where
                 break;
             }
 
+            let max_interest = new_queue.iter().map(|s| s.g.is_interesting()).max().unwrap();
             self.q_active = new_queue;
+            self.q_active.retain(|x| x.g.is_interesting() >= max_interest);
         }
 
         let subgraphs = self.subgraphs;
@@ -71,7 +75,7 @@ where
     fn iterate(&self) -> HashSet<State<S>> {
         self.
             q_active
-            .iter()
+            .par_iter()
             .flat_map(|state| {
                 self.explore_state(state)
             })
@@ -79,7 +83,7 @@ where
     }
 
     /// Explores one of the current states by trying to attach unused subgraphs.
-    fn explore_state(&self, state: &State<S>) -> impl Iterator<Item=State<S>> {
+    fn explore_state(&self, state: &State<S>) -> impl ParallelIterator<Item=State<S>> {
         // Iterate over all the subgraphs that are still available.
         self.subgraphs
             .attachable_subgraphs()
@@ -105,6 +109,6 @@ where
                     })
             })
             .collect::<HashSet<_>>()
-            .into_iter()
+            .into_par_iter()
     }
 }
