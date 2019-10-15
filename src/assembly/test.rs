@@ -3,35 +3,6 @@ use crate::subgraphs;
 use crate::subgraphs::Subgraphs;
 use crate::Graph;
 
-// fn test4(structure: &str) {
-//     let g = Graph::new(structure);
-
-//     {
-//         use std::io::Write;
-//         let filename = "trace/original.dot";
-//         let mut f = std::fs::File::create(filename).unwrap();
-//         writeln!(&mut f, "graph g {{").unwrap();
-//         g.dump(&mut f, 0, true).unwrap();
-//         writeln!(&mut f, "}}").unwrap();
-//     }
-
-//     let sg = subgraphs::variants::Only4::new(&g);
-
-//     {
-//         let filename = "trace/subgraphs.dot";
-//         let f = std::fs::File::create(filename).unwrap();
-//         crate::prelude::dump_set(f, sg.all_subgraphs()).unwrap();
-//     }
-
-//     let gs = assemble(sg);
-//     assert!(gs.contains(&g));
-//     {
-//         let filename = "trace/result.dot";
-//         let f = std::fs::File::create(filename).unwrap();
-//         crate::prelude::dump_set(f, gs.iter()).unwrap();
-//     }
-// }
-
 fn test_rings(structure: &str) {
     let g = Graph::new(structure);
 
@@ -79,6 +50,7 @@ fn benzol() {
     let j = r#"{"atoms": [[1, 6], [2, 6], [3, 6], [4, 6], [5, 6], [6, 6], [7, 1], [8, 1], [9, 1], [10, 1], [11, 1], [12, 1]],
                 "bonds": [[1, 2, 2], [1, 3, 1], [1, 12, 1], [2, 4, 1], [2, 7, 1], [3, 5, 2], [3, 8, 1], [4, 6, 2], [4, 9, 1], [5, 6, 1], [5, 10, 1], [6, 11, 1]]}"#;
     test_assembly(j);
+    crate::STATISTICS.lock().unwrap().dump();
 }
 
 #[test]

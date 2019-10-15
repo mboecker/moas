@@ -52,19 +52,19 @@ impl subgraphs::Subgraphs for SubgraphsAndRings {
     }
 
     fn select_starting_graph(&self) -> Graph {
-        if !self.rings6.is_empty() {
-            self.rings6.keys().next().unwrap().clone()
-        } else if !self.rings5.is_empty() {
-            self.rings5.keys().next().unwrap().clone()
-        } else {
-            self.subgraphs.keys().next().unwrap().clone()
-        }
+        self.all_subgraphs().next().unwrap().clone()
     }
 
     fn is_subset_of(&self, other: &Self) -> bool {
         // self is supposed to be a subset of other.
         // therefore, if self contains any subgraphs that are not contained in other,
         // or contains more of said subgraphs, its not a subset.
+
+        for (k, v) in self.atoms.iter() {
+            if other.atoms.get(k).unwrap_or(&0) < v {
+                return false;
+            }
+        }
 
         for (k, v) in self.rings6.iter() {
             if other.rings6.get(k).unwrap_or(&0) < v {
@@ -88,11 +88,18 @@ impl subgraphs::Subgraphs for SubgraphsAndRings {
     }
 
     fn all_subgraphs<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=&'a Graph>> {
-        Box::new(self.rings6.keys().chain(self.rings5.keys()).chain(self.subgraphs.keys()))
+        Box::new(self.rings6.keys().chain(self.rings5.keys()).chain(self.subgraphs.keys()).chain(self.atoms.keys()))
     }
 
     fn attachable_subgraphs<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=&'a Graph>> {
         Box::new(self.subgraphs.keys())
+    }
+
+    fn score(&self) -> usize {
+        let has_ring6 = (self.rings6.len() > 0) as usize;
+        let has_ring5 = (self.rings5.len() > 0) as usize;
+        let has_subgraph = (self.subgraphs.len() > 0) as usize;
+        has_ring6 * 3 + has_ring5 * 2 + has_subgraph
     }
 }
 

@@ -45,6 +45,10 @@ impl subgraphs::Subgraphs for Only4 {
     fn attachable_subgraphs<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=&'a Graph>> {
         Box::new(self.subgraphs.keys())
     }
+
+    fn score(&self) -> usize {
+        0
+    }
 }
 
 impl Hash for Only4 {

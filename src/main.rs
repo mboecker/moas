@@ -9,11 +9,23 @@ mod attachment;
 mod graph;
 mod subgraphs;
 mod isomorphism;
+mod statistics;
 
 use attachment::attach;
 use assembly::assemble;
 use graph::Graph;
 use isomorphism::are_isomorphic;
+use statistics::STATISTICS;
+
+pub fn get_max_bonds_for_element(a: usize) -> u8 {
+    match a {
+        1 => 1,
+        6 => 4,
+        7 => 3,
+        8 => 2,
+        _ => 4,
+    }
+}
 
 #[derive(Debug)]
 /// An entry from the SQLite Database of all the pubchem molecules.
@@ -27,7 +39,8 @@ struct CompoundEntry {
 
 fn main() {
     let conn = Connection::open("sqlite/pubchem.db").unwrap();
-    let sql = "SELECT cid, structure, is_contiguous, n_atoms, n_edges FROM compounds where cid = 2519 LIMIT 1";
+    let cid = 2519;
+    let sql = format!("SELECT cid, structure, is_contiguous, n_atoms, n_edges FROM compounds where cid = {} LIMIT 1", cid);
     let mut stmt = conn.prepare(&sql).unwrap();
     let iter = stmt
         .query_map(NO_PARAMS, |row| {
@@ -47,10 +60,35 @@ fn main() {
 
         let g = graph::Graph::new(x.structure);
 
+        // {
+        //     use std::io::Write;
+        //     let filename = "trace/original.dot";
+        //     let mut f = std::fs::File::create(filename).unwrap();
+        //     writeln!(&mut f, "graph g {{").unwrap();
+        //     g.dump(&mut f, 0, true).unwrap();
+        //     writeln!(&mut f, "}}").unwrap();
+        // }
+
         // determine the graphs' subgraphs.
         let sg = subgraphs::variants::SubgraphsAndRings::new(&g);
 
+        // {
+        //     let filename = "trace/subgraphs.dot";
+        //     let f = std::fs::File::create(filename).unwrap();
+        //     crate::prelude::dump_set(f, sg.all_subgraphs()).unwrap();
+        // }
+
         // re-assemble the graph
-        let g = assemble(sg);
+        let gs = assemble(sg);
+
+        assert!(gs.contains(&g));
+
+        // {
+        //     let filename = "trace/result.dot";
+        //     let f = std::fs::File::create(filename).unwrap();
+        //     crate::prelude::dump_set(f, gs.iter()).unwrap();
+        // }
     }
+
+    crate::STATISTICS.lock().unwrap().dump();
 }

@@ -17,6 +17,9 @@ where
 
     /// Already explored states of assembly.
     q_passive: HashSet<State<S>>,
+
+    /// The current iteration number.
+    current_iter: usize,
 }
 
 impl<S> Run<S>
@@ -37,11 +40,17 @@ where
             subgraphs,
             q_active,
             q_passive,
+            current_iter: 0,
         }
     }
 
     pub fn assemble(mut self) -> HashSet<Graph> {
         for iter in 0.. {
+            use chrono::Utc;
+            println!("Starting iteration {} at {}", iter, Utc::now().to_rfc2822());
+            println!("Active Queue: {}", self.q_active.len());
+            println!("Passive Queue: {}", self.q_passive.len());
+            println!();
 
             {
                 let filename = format!("trace/iter_{}.dot", iter);
@@ -50,6 +59,7 @@ where
             }
 
             // Assemble current active graphs into new graphs.
+            self.current_iter = iter;
             let new_queue = self.iterate();
 
             // Move active graphs into the passive graphs.
@@ -59,9 +69,19 @@ where
                 break;
             }
 
-            let max_interest = new_queue.iter().map(|s| s.g.is_interesting()).max().unwrap();
-            self.q_active = new_queue;
-            self.q_active.retain(|x| x.g.is_interesting() >= max_interest);
+            for x in new_queue.into_iter() {
+                if !self.q_passive.contains(&x) {
+                    self.q_active.insert(x);
+                }
+            }
+
+            if self.q_active.is_empty() {
+                break;
+            }
+
+            let max_score = self.q_active.iter().map(|s| s.used.score()).max().unwrap();
+            // let max_interest = self.q_active.iter().map(|s| s.g.is_interesting()).max().unwrap();
+            self.q_active.retain(|x| x.used.score() >= max_score);
         }
 
         let subgraphs = self.subgraphs;
@@ -92,9 +112,18 @@ where
                 crate::attach(&state.g, sg)
                     .into_iter()
                     .filter_map(move |attachment| {
-
                         // Actually perform the attachment and create a graph.
                         let g = crate::attachment::perform(&state.g, sg, attachment);
+
+                        // Rule out graphs with too many atom bonds.
+                        for i in 0..g.size() {
+                            let s: u8 = (0..g.size()).map(|j| g.bonds().get(i, j)).sum();
+                            if s > crate::get_max_bonds_for_element(g.atoms()[i]) {
+                                return None;
+                            }
+                        }
+
+                        crate::STATISTICS.lock().unwrap().graph_proposed(self.current_iter);
 
                         // Calculate newly used subgraphs.
                         let used_subgraphs = S::new(&g);
@@ -102,8 +131,10 @@ where
                         // Check, if by attaching this subgraph in this way,
                         // we used more subgraphs than we're allowed to.
                         if used_subgraphs.is_subset_of(&self.subgraphs) {
+                            crate::STATISTICS.lock().unwrap().valid_graph_proposed(self.current_iter);
                             Some(State::new(g, used_subgraphs))
                         } else {
+                            crate::STATISTICS.lock().unwrap().report_invalid_graph(g);
                             None
                         }
                     })
