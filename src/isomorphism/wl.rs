@@ -45,10 +45,11 @@ pub fn relabel(g: &mut Graph) {
     }
 
     // assign ids to the names, where the lexicographically smallest name has the smallest id.
-    let name_ids: HashMap<Name, usize> = names
-        .values()
-        .cloned()
-        .sorted()
+    let mut tmp: Vec<_> = names.values().cloned().collect();
+    tmp.sort_unstable();
+
+    let name_ids: HashMap<Name, usize> = tmp
+        .into_iter()
         .dedup()
         .enumerate()
         .map(|(a, b)| (b, a))
