@@ -6,23 +6,21 @@ use std::iter::FromIterator;
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 struct Name {
-    neighbors: [usize; 8]
+    neighbors: [usize; 8],
 }
 
 impl FromIterator<(usize, usize)> for Name {
-      fn from_iter<I: IntoIterator<Item=(usize, usize)>>(iter: I) -> Self {
+    fn from_iter<I: IntoIterator<Item = (usize, usize)>>(iter: I) -> Self {
         let mut neighbors = [0; 8];
 
         for (i, (x, y)) in iter.into_iter().enumerate() {
             if i < 4 {
-                neighbors[i * 2]     = x;
+                neighbors[i * 2] = x;
                 neighbors[i * 2 + 1] = y;
             }
         }
 
-        Name {
-            neighbors
-        }
+        Name { neighbors }
     }
 }
 
@@ -37,7 +35,8 @@ pub fn relabel(g: &mut Graph) {
         // The new name for a node is its own label, followed by a list of its neighbors.
         // For that, we iterate through all of its adjacent nodes
         // and note the node label as well as the amount of edges between the node and its neighbor.
-        let name = g.neighbors(i as usize)
+        let name = g
+            .neighbors(i as usize)
             .map(|j| (*g.bonds().get(i as usize, j) as usize, g.atoms()[j]))
             .sorted()
             .collect();

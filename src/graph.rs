@@ -215,7 +215,11 @@ impl Graph {
 
     pub fn is_interesting(&self) -> usize {
         use itertools::Itertools;
-        (0..self.size()).tuple_combinations::<(_,_)>().filter(|(i,j)| i < j).map(|(i,j)| self.bonds().get(i,j)).fold(0usize, |a,b| a + *b as usize)
+        (0..self.size())
+            .tuple_combinations::<(_, _)>()
+            .filter(|(i, j)| i < j)
+            .map(|(i, j)| self.bonds().get(i, j))
+            .fold(0usize, |a, b| a + *b as usize)
     }
 
     /// Determines if this graph is one big circle.

@@ -1,8 +1,8 @@
-use std::sync::Mutex;
+use crate::Graph;
 use lazy_static::lazy_static;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
-use crate::Graph;
+use std::sync::Mutex;
 
 lazy_static! {
     pub static ref STATISTICS: Mutex<Statistics> = Mutex::new(Statistics::default());
@@ -29,12 +29,22 @@ impl Statistics {
         {
             let mut f = std::fs::File::create("statistics.txt").unwrap();
             for iter in self.proposed_graphs.keys() {
-                writeln!(&mut f, "proposed graphs in iter {}: {:?}", iter, self.proposed_graphs.get(iter)).unwrap();
-                writeln!(&mut f, " -> amount of valid graphs: {:?}", self.valid_proposed_graphs.get(iter)).unwrap();
+                writeln!(
+                    &mut f,
+                    "proposed graphs in iter {}: {:?}",
+                    iter,
+                    self.proposed_graphs.get(iter)
+                )
+                .unwrap();
+                writeln!(
+                    &mut f,
+                    " -> amount of valid graphs: {:?}",
+                    self.valid_proposed_graphs.get(iter)
+                )
+                .unwrap();
             }
         }
 
-        
         {
             let f = std::fs::File::create("invalid_subgraphs.dot").unwrap();
             crate::prelude::dump_set(f, self.invalid_graph.keys()).unwrap();

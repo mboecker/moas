@@ -1,10 +1,10 @@
+use crate::subgraphs;
 use crate::Graph;
 use std::collections::HashMap;
 use std::hash::Hash;
 use std::hash::Hasher;
-use crate::subgraphs;
 
-#[derive(Eq,PartialEq)]
+#[derive(Eq, PartialEq)]
 pub struct Only4 {
     subgraphs: HashMap<Graph, usize>,
 }
@@ -15,9 +15,7 @@ impl subgraphs::Subgraphs for Only4 {
         let subgraphs = subgraphs::get_all(g, 4);
         let subgraphs = subgraphs::count_subgraphs(g, &subgraphs, 4);
 
-        Only4 {
-            subgraphs,
-        }
+        Only4 { subgraphs }
     }
 
     fn select_starting_graph(&self) -> Graph {
@@ -25,7 +23,6 @@ impl subgraphs::Subgraphs for Only4 {
     }
 
     fn is_subset_of(&self, other: &Self) -> bool {
-
         // self is supposed to be a subset of other.
         // therefore, if self contains any subgraphs that are not contained in other,
         // or contains more of said subgraphs, its not a subset.
@@ -38,11 +35,11 @@ impl subgraphs::Subgraphs for Only4 {
         true
     }
 
-    fn all_subgraphs<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=&'a Graph>> {
+    fn all_subgraphs<'a>(&'a self) -> Box<dyn 'a + Iterator<Item = &'a Graph>> {
         Box::new(self.subgraphs.keys())
     }
 
-    fn attachable_subgraphs<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=&'a Graph>> {
+    fn attachable_subgraphs<'a>(&'a self) -> Box<dyn 'a + Iterator<Item = &'a Graph>> {
         Box::new(self.subgraphs.keys())
     }
 
@@ -60,7 +57,9 @@ impl Hash for Only4 {
         use std::collections::BTreeSet;
 
         // calculate the hashes for all subgraphs and sort them according to their hash values.
-        let subgraphs: BTreeSet<_> = self.subgraphs.iter()
+        let subgraphs: BTreeSet<_> = self
+            .subgraphs
+            .iter()
             .map(|(g, c)| -> (u64, usize) {
                 let mut h = DefaultHasher::default();
                 g.hash(&mut h);

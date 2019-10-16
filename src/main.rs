@@ -3,17 +3,17 @@ extern crate test;
 
 use rusqlite::{Connection, NO_PARAMS};
 
-mod prelude;
 mod assembly;
 mod attachment;
-mod graph;
-mod subgraphs;
-mod isomorphism;
-mod statistics;
 mod extra;
+mod graph;
+mod isomorphism;
+mod prelude;
+mod statistics;
+mod subgraphs;
 
-use attachment::attach;
 use assembly::assemble;
+use attachment::attach;
 use graph::Graph;
 use isomorphism::are_isomorphic;
 use statistics::STATISTICS;

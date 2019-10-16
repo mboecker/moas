@@ -59,7 +59,8 @@ pub(super) fn are_isomorphic(g1: &Graph, g2: &Graph) -> bool {
             let label = g1.atoms()[*current];
 
             // nodes with the same label
-            let similar_nodes: Vec<_> = similar.find(label)
+            let similar_nodes: Vec<_> = similar
+                .find(label)
                 .filter(|i| !taken_g2_nodes.contains(i))
                 .collect();
 

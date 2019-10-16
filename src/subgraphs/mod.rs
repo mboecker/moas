@@ -1,8 +1,8 @@
 mod base_case;
-pub mod variants;
 mod count;
 mod iteration;
 mod r#trait;
+pub mod variants;
 
 #[cfg(test)]
 mod test;

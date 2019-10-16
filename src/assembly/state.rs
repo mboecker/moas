@@ -10,7 +10,10 @@ pub(super) struct State<S> {
     hash: u64,
 }
 
-impl<S> State<S> where S: PartialEq + Hash {
+impl<S> State<S>
+where
+    S: PartialEq + Hash,
+{
     pub fn new(g: Graph, used: S) -> State<S> {
         let hash = Self::hash(&g, &used);
         State { g, used, hash }
@@ -24,7 +27,7 @@ impl<S> State<S> where S: PartialEq + Hash {
         let mut h = DefaultHasher::default();
         g.hash(&mut h);
         used.hash(&mut h);
-        
+
         // return the computed hash
         h.finish()
     }

@@ -1,4 +1,4 @@
-mod with_rings;
 mod only4;
-pub use self::with_rings::SubgraphsAndRings;
+mod with_rings;
 pub use self::only4::Only4;
+pub use self::with_rings::SubgraphsAndRings;

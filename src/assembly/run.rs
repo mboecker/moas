@@ -1,9 +1,9 @@
 use super::State;
-use crate::Graph;
 use crate::subgraphs::Subgraphs;
+use crate::Graph;
+use rayon::prelude::*;
 use std::collections::HashSet;
 use std::hash::Hash;
-use rayon::prelude::*;
 
 pub struct Run<S>
 where
@@ -93,17 +93,14 @@ where
     }
 
     fn iterate(&self) -> HashSet<State<S>> {
-        self.
-            q_active
+        self.q_active
             .par_iter()
-            .flat_map(|state| {
-                self.explore_state(state)
-            })
+            .flat_map(|state| self.explore_state(state))
             .collect()
     }
 
     /// Explores one of the current states by trying to attach unused subgraphs.
-    fn explore_state(&self, state: &State<S>) -> impl ParallelIterator<Item=State<S>> {
+    fn explore_state(&self, state: &State<S>) -> impl ParallelIterator<Item = State<S>> {
         // Iterate over all the subgraphs that are still available.
         self.subgraphs
             .attachable_subgraphs()
@@ -123,7 +120,10 @@ where
                             }
                         }
 
-                        crate::STATISTICS.lock().unwrap().graph_proposed(self.current_iter);
+                        crate::STATISTICS
+                            .lock()
+                            .unwrap()
+                            .graph_proposed(self.current_iter);
 
                         // Calculate newly used subgraphs.
                         let used_subgraphs = S::new(&g);
@@ -131,7 +131,10 @@ where
                         // Check, if by attaching this subgraph in this way,
                         // we used more subgraphs than we're allowed to.
                         if used_subgraphs.is_subset_of(&self.subgraphs) {
-                            crate::STATISTICS.lock().unwrap().valid_graph_proposed(self.current_iter);
+                            crate::STATISTICS
+                                .lock()
+                                .unwrap()
+                                .valid_graph_proposed(self.current_iter);
                             Some(State::new(g, used_subgraphs))
                         } else {
                             crate::STATISTICS.lock().unwrap().report_invalid_graph(g);

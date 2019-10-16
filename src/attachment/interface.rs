@@ -27,7 +27,7 @@ pub fn attach(g: &Graph, sg: &Graph) -> HashSet<Result> {
         }
     }
 
-    inner(g, sg, &mut q);   
+    inner(g, sg, &mut q);
     assert_eq!(q.active.len(), 0);
     q.passive
         .into_iter()

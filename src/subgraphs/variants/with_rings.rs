@@ -1,10 +1,10 @@
+use crate::subgraphs;
 use crate::Graph;
 use std::collections::HashMap;
 use std::hash::Hash;
 use std::hash::Hasher;
-use crate::subgraphs;
 
-#[derive(Eq,PartialEq)]
+#[derive(Eq, PartialEq)]
 pub struct SubgraphsAndRings {
     atoms: HashMap<Graph, usize>,
     subgraphs: HashMap<Graph, usize>,
@@ -15,11 +15,15 @@ pub struct SubgraphsAndRings {
 impl subgraphs::Subgraphs for SubgraphsAndRings {
     fn new(g: &Graph) -> Self {
         assert!(g.size() >= 4);
-        let atoms = g.label_counts().into_iter().map(|(i,c)| {
-            let mut g = Graph::with_size(1);
-            g.atoms_mut()[0] = i;
-            (g,c)
-        }).collect();
+        let atoms = g
+            .label_counts()
+            .into_iter()
+            .map(|(i, c)| {
+                let mut g = Graph::with_size(1);
+                g.atoms_mut()[0] = i;
+                (g, c)
+            })
+            .collect();
 
         let subgraphs = subgraphs::get_all(g, 4);
 
@@ -87,11 +91,17 @@ impl subgraphs::Subgraphs for SubgraphsAndRings {
         true
     }
 
-    fn all_subgraphs<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=&'a Graph>> {
-        Box::new(self.rings6.keys().chain(self.rings5.keys()).chain(self.subgraphs.keys()).chain(self.atoms.keys()))
+    fn all_subgraphs<'a>(&'a self) -> Box<dyn 'a + Iterator<Item = &'a Graph>> {
+        Box::new(
+            self.rings6
+                .keys()
+                .chain(self.rings5.keys())
+                .chain(self.subgraphs.keys())
+                .chain(self.atoms.keys()),
+        )
     }
 
-    fn attachable_subgraphs<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=&'a Graph>> {
+    fn attachable_subgraphs<'a>(&'a self) -> Box<dyn 'a + Iterator<Item = &'a Graph>> {
         Box::new(self.subgraphs.keys())
     }
 
@@ -112,7 +122,9 @@ impl Hash for SubgraphsAndRings {
         use std::collections::BTreeSet;
 
         // calculate the hashes for all subgraphs and sort them according to their hash values.
-        let subgraphs: BTreeSet<_> = self.atoms.iter()
+        let subgraphs: BTreeSet<_> = self
+            .atoms
+            .iter()
             .map(|(g, c)| -> (u64, usize) {
                 let mut h = DefaultHasher::default();
                 g.hash(&mut h);
