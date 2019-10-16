@@ -10,6 +10,7 @@ mod graph;
 mod subgraphs;
 mod isomorphism;
 mod statistics;
+mod extra;
 
 use attachment::attach;
 use assembly::assemble;
