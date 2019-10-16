@@ -19,9 +19,10 @@ impl Default for Queue {
 pub fn attach(g: &Graph, sg: &Graph) -> HashSet<Result> {
     let mut q = Queue::default();
 
+    let similar = crate::extra::Similar::new(g);
+
     for (i, l) in sg.atoms().iter().enumerate() {
-        let similar = g.atoms().iter().enumerate().filter(|(_, l2)| &l == l2);
-        for (j, _) in similar {
+        for j in similar.find(*l) {
             q.active.insert(Mapping::new(i, j));
         }
     }

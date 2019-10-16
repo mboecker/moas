@@ -24,6 +24,7 @@ pub(super) fn are_isomorphic(g1: &Graph, g2: &Graph) -> bool {
     ) -> bool {
         let n = g1.size();
 
+        // If this is a leaf node, check if the resulting mapping is valid.
         if undecided_nodes.len() == 0 {
             if impossible.contains(partial_mapping) {
                 return false;
@@ -50,17 +51,16 @@ pub(super) fn are_isomorphic(g1: &Graph, g2: &Graph) -> bool {
             return true;
         }
 
+        // Create an index structure to efficiently answer queries for nodes with the same label.
+        let similar = crate::extra::Similar::new(&g2);
+
         // try every undecided node in g1
         for current in undecided_nodes.clone().iter() {
             let label = g1.atoms()[*current];
 
             // nodes with the same label
-            let similar_nodes: Vec<_> = g2
-                .atoms()
-                .iter()
-                .enumerate()
-                .filter(|(i, c_label)| c_label == &&label && !taken_g2_nodes.contains(i))
-                .map(|(i, _)| i)
+            let similar_nodes: Vec<_> = similar.find(label)
+                .filter(|i| !taken_g2_nodes.contains(i))
                 .collect();
 
             // select possible candidates from g2

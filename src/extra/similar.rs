@@ -28,6 +28,6 @@ impl Similar {
     }
 
     pub fn find<'a>(&'a self, label: usize) -> impl 'a + Iterator<Item=usize> {
-        self.old_strat[&label].iter().cloned()
+        self.old_strat.get(&label).into_iter().flat_map(|x| x.iter().cloned())
     }
 }
