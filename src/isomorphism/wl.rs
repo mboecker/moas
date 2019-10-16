@@ -2,23 +2,43 @@
 
 use crate::graph::Graph;
 use std::collections::HashMap;
+use std::iter::FromIterator;
+
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+struct Name {
+    neighbors: [usize; 8]
+}
+
+impl FromIterator<(usize, usize)> for Name {
+      fn from_iter<I: IntoIterator<Item=(usize, usize)>>(iter: I) -> Self {
+        let mut neighbors = [0; 8];
+
+        for (i, (x, y)) in iter.into_iter().enumerate() {
+            if i < 4 {
+                neighbors[i * 2]     = x;
+                neighbors[i * 2 + 1] = y;
+            }
+        }
+
+        Name {
+            neighbors
+        }
+    }
+}
 
 /// Relabels the graph according to its immediate neighbors.
 pub fn relabel(g: &mut Graph) {
     use itertools::Itertools;
 
-    let mut names: HashMap<usize, Vec<_>> = HashMap::new();
+    let mut names: HashMap<usize, Name> = HashMap::new();
 
     // relabel all the nodes
-    for (i, l) in g.atoms().iter().enumerate() {
+    for i in 0..g.size() {
         // The new name for a node is its own label, followed by a list of its neighbors.
         // For that, we iterate through all of its adjacent nodes
         // and note the node label as well as the amount of edges between the node and its neighbor.
-        let name = std::iter::once((0u8, *l))
-            .chain(
-                g.neighbors(i as usize)
-                    .map(|j| (*g.bonds().get(i as usize, j), g.atoms()[j])),
-            )
+        let name = g.neighbors(i as usize)
+            .map(|j| (*g.bonds().get(i as usize, j) as usize, g.atoms()[j]))
             .sorted()
             .collect();
 
@@ -26,7 +46,7 @@ pub fn relabel(g: &mut Graph) {
     }
 
     // assign ids to the names, where the lexicographically smallest name has the smallest id.
-    let name_ids: HashMap<Vec<_>, usize> = names
+    let name_ids: HashMap<Name, usize> = names
         .values()
         .cloned()
         .sorted()
