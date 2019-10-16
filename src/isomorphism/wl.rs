@@ -7,7 +7,7 @@ use std::collections::HashMap;
 pub fn relabel(g: &mut Graph) {
     use itertools::Itertools;
 
-    let mut names: HashMap<usize, String> = HashMap::new();
+    let mut names: HashMap<usize, Vec<_>> = HashMap::new();
 
     // relabel all the nodes
     for (i, l) in g.atoms().iter().enumerate() {
@@ -20,14 +20,13 @@ pub fn relabel(g: &mut Graph) {
                     .map(|j| (*g.bonds().get(i as usize, j), g.atoms()[j])),
             )
             .sorted()
-            .map(|x| format!("({}-{})", x.0, x.1))
-            .join("-");
+            .collect();
 
         names.insert(i, name);
     }
 
     // assign ids to the names, where the lexicographically smallest name has the smallest id.
-    let name_ids: HashMap<String, usize> = names
+    let name_ids: HashMap<Vec<_>, usize> = names
         .values()
         .cloned()
         .sorted()
