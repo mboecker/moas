@@ -47,11 +47,6 @@ where
     pub fn assemble(mut self) -> HashSet<Graph> {
         for iter in 0.. {
             use chrono::Utc;
-            println!("Starting iteration {} at {}", iter, Utc::now().to_rfc2822());
-            println!("Active Queue: {}", self.q_active.len());
-            println!("Passive Queue: {}", self.q_passive.len());
-            println!();
-
             {
                 let filename = format!("trace/iter_{}.dot", iter);
                 let f = std::fs::File::create(filename).unwrap();
@@ -60,7 +55,14 @@ where
 
             // Assemble current active graphs into new graphs.
             self.current_iter = iter;
+            let start = std::time::Instant::now();
             let new_queue = self.iterate();
+            let duration = std::time::Instant::now() - start;
+            println!("Starting iteration {} at {}", iter, Utc::now().to_rfc2822());
+            println!("Active Queue: {}", self.q_active.len());
+            println!("Passive Queue: {}", self.q_passive.len());
+            println!("Duration: {:.2}s", duration.as_secs_f64());
+            println!();
 
             // Move active graphs into the passive graphs.
             self.q_passive.extend(self.q_active.drain());
