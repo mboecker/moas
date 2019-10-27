@@ -1,3 +1,4 @@
+mod bitset;
 mod fast;
 mod slow;
 mod wl;
@@ -28,9 +29,6 @@ pub fn are_isomorphic(g1: &Graph, g2: &Graph) -> bool {
         // rename each node by appending their direct neighbors to themselves.
         wl::relabel(&mut g1);
         wl::relabel(&mut g2);
-
-        // println!("g1 {:?}", g1);
-        // println!("g2 {:?}", g2);
 
         let l1 = g1.label_counts();
         let l2 = g2.label_counts();

@@ -8,7 +8,7 @@ impl Default for Mapping {
     fn default() -> Mapping {
         Mapping {
             mapping: Vec::new(),
-            min: std::usize::MAX
+            min: std::usize::MAX,
         }
     }
 }
@@ -17,7 +17,7 @@ impl Mapping {
     pub fn new(i: usize, j: usize) -> Mapping {
         Mapping {
             mapping: vec![(i, j)],
-            min: j
+            min: j,
         }
     }
 

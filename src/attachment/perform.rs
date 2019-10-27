@@ -1,12 +1,14 @@
-use std::collections::HashMap;
-
-use super::Result;
 use crate::Graph;
+use std::collections::BTreeMap;
 
-pub fn perform(g: &Graph, sg: &Graph, attachment: Result) -> Graph {
-    if attachment.new_node.is_none() {
+pub fn perform(
+    g: &Graph,
+    sg: &Graph,
+    mapping: BTreeMap<usize, usize>,
+    new_node: Option<usize>,
+) -> Graph {
+    if new_node.is_none() {
         // only a new edge has been added
-        let mapping: HashMap<_, _> = attachment.mapping.into_iter().collect();
         let mut g = g.clone();
         for i in 0..sg.size() {
             for j in 0..i {
@@ -23,8 +25,7 @@ pub fn perform(g: &Graph, sg: &Graph, attachment: Result) -> Graph {
     } else {
         // a new node has been added
         // println!("adding new node");
-        let mapping: HashMap<_, _> = attachment.mapping.iter().cloned().collect();
-        let new_node_sg_id = attachment.new_node.unwrap();
+        let new_node_sg_id = new_node.unwrap();
         let mut g = g.clone_with_extraspace(1);
 
         let j = new_node_sg_id;

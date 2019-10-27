@@ -1,4 +1,5 @@
 use crate::Graph;
+use std::collections::BTreeMap;
 
 #[derive(PartialEq, Eq, Hash, Debug)]
 pub struct Result {
@@ -12,5 +13,11 @@ impl Result {
             .filter(|i| mapping.iter().all(|(j, _)| j != i))
             .next();
         Result { mapping, new_node }
+    }
+}
+
+impl Into<BTreeMap<usize, usize>> for Result {
+    fn into(self) -> BTreeMap<usize, usize> {
+        self.mapping.into_iter().collect()
     }
 }

@@ -71,8 +71,8 @@ fn inner(g: &Graph, sg: &Graph, queue: &mut Queue) {
                         // Try different matching nodes in the big graph g.
                         // This means that the new node in the newly added edge is mapped to `candidate` in g.
                         for candidate in g.neighbors(*mapped_i).filter(|&candidate| {
-                            candidate > node.min && 
-                                free_g_nodes.contains(&candidate)
+                            candidate > node.min
+                                && free_g_nodes.contains(&candidate)
                                 && g.atoms()[candidate] == label
                                 && *g.bonds().get(*mapped_i, candidate) == n
                         }) {

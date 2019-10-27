@@ -186,7 +186,7 @@ impl Graph {
     /// Returns a Dictionary with counts for all the node labels in this graph.
     pub fn label_counts(&self) -> BTreeMap<usize, usize> {
         let mut hm = BTreeMap::new();
-        for (_, label) in self.atoms.iter().enumerate() {
+        for label in self.atoms.iter() {
             *hm.entry(*label).or_insert(0) += 1;
         }
         hm
@@ -232,26 +232,29 @@ impl Hash for Graph {
     fn hash<H: Hasher>(&self, state: &mut H) {
         // This function must result in the same hash for equal (isomorph) graphs.
 
-        // Sum up the element ids (associative, so the ordering of the atoms doesnt matter).
-        self.label_counts().iter().for_each(|p| p.hash(state));
+        // For each combination of node labels, hash the amount of edges between these.
+        let mut edge_counts: BTreeMap<(usize, usize), usize> = BTreeMap::new();
 
-        // Sum up the element ids (associative, so the ordering of the atoms doesnt matter).
-        {
-            use itertools::Itertools;
+        // Hash the node labels and their occurance count in sorted order, so that their ordering is consistent in different graphs.
+        let mut label_counts = BTreeMap::new();
 
-            let mut counts: BTreeMap<(usize, usize), usize> = BTreeMap::new();
+        for i in 0..self.size() {
+            // Increate label count of current node.
+            let element1 = self.atoms()[i];
+            *label_counts.entry(element1).or_insert(0) += 1;
 
-            for (i, j) in (0..self.size()).tuple_combinations().filter(|(i, j)| i < j) {
-                let mut element1 = self.atoms()[i];
-                let mut element2 = self.atoms()[j];
+            for j in 0..i {
+                let element2 = self.atoms()[j];
                 if element1 > element2 {
-                    std::mem::swap(&mut element1, &mut element2);
+                    *edge_counts.entry((element2, element1)).or_default() += 1;
+                } else {
+                    *edge_counts.entry((element1, element2)).or_default() += 1;
                 }
-                *counts.entry((element1, element2)).or_default() += 1;
             }
-
-            counts.hash(state);
         }
+
+        label_counts.hash(state);
+        edge_counts.hash(state);
     }
 }
 
@@ -292,34 +295,47 @@ pub fn random_graph(n: usize) -> Graph {
     // get random number generator
     let mut rng = rand::thread_rng();
 
-    // [2, n]
-    let n_diff_labels = rng.gen_range(2, n + 1);
+    loop {
+        // [2, n]
+        let n_diff_labels = rng.gen_range(2, n + 1);
 
-    // [1, 99]
-    let p = rng.gen_range(1, 100);
+        // [1, 99]
+        let p = rng.gen_range(1, 100);
 
-    let mut g = Graph::with_size(n);
+        let mut g = Graph::with_size(n);
 
-    for i in 0..n {
-        g.atoms_mut()[i] = rng.gen_range(0, n_diff_labels);
-    }
-
-    for i in 0..n {
-        for j in 0..i {
-            let v = if rng.gen_ratio(p, 100) {
-                rng.gen_range(1, 4)
-            } else {
-                0
-            };
-            *g.bonds_mut().get_mut(i, j) = v;
-            *g.bonds_mut().get_mut(j, i) = v;
+        for i in 0..n {
+            g.atoms_mut()[i] = rng.gen_range(0, n_diff_labels);
         }
-    }
 
-    if g.is_contiguous() {
-        g
-    } else {
-        random_graph(n)
+        let mut counts: Vec<_> = (0..n).map(|_| 0u8).collect();
+
+        for _ in 0..10 {
+            for i in 0..n {
+                for j in 0..i {
+                    let v = if rng.gen_ratio(p, 100) {
+                        rng.gen_range(1, 4)
+                    } else {
+                        0
+                    };
+
+                    if counts[i] <= 4-v && counts[j] <= 4-v {
+                        counts[i] += v;
+                        counts[j] += v;
+                        *g.bonds_mut().get_mut(i, j) = v;
+                        *g.bonds_mut().get_mut(j, i) = v;
+                    }
+                }
+            }
+
+            if g.is_contiguous() {
+                return g;
+            }
+        }
+
+        if g.is_contiguous() {
+            return g;
+        }
     }
 }
 
@@ -336,13 +352,6 @@ fn test_error1() {
     let j = r#"{"atoms": [[1, 15], [2, 8], [3, 8], [4, 8], [5, 8], [6, 8], [7, 7], [8, 6], [9, 6], [10, 6], [11, 1], [12, 1], [13, 1], [14, 1], [15, 1], [16, 1], [17, 1], [18, 1]], "bonds": [[1, 2, 1], [1, 3, 1], [1, 4, 1], [1, 6, 2], [2, 8, 1], [3, 17, 1], [4, 18, 1], [5, 9, 2], [7, 10, 1], [7, 15, 1], [7, 16, 1], [8, 9, 1], [8, 11, 1], [8, 12, 1], [9, 10, 1], [10, 13, 1], [10, 14, 1]]}"#;
     let g = Graph::new(j);
     println!("{:?}", g);
-}
-
-#[test]
-fn test_random_graph() {
-    for i in 3..100 {
-        random_graph(i);
-    }
 }
 
 #[test]
@@ -375,7 +384,7 @@ fn test_isomorphism() {
     use rand::seq::SliceRandom;
 
     let mut rng = rand::thread_rng();
-    let n = 10;
+    let n = 6;
     let g1 = random_graph(n);
 
     let mut order: Vec<_> = (0..n).collect();
@@ -385,7 +394,7 @@ fn test_isomorphism() {
     // println!("g1 = {:?}", g1);
     // println!("g2 = {:?}", g2);
 
-    assert!(g1 == g2);
+    assert_eq!(g1, g2);
 }
 
 #[test]

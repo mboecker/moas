@@ -111,6 +111,10 @@ impl subgraphs::Subgraphs for SubgraphsAndRings {
         let has_subgraph = (self.subgraphs.len() > 0) as usize;
         has_ring6 * 3 + has_ring5 * 2 + has_subgraph
     }
+
+    fn amount_of(&self, g: &Graph) -> usize {
+        *self.subgraphs.get(g).unwrap_or(&0)
+    }
 }
 
 impl Hash for SubgraphsAndRings {

@@ -6,8 +6,10 @@ use std::hash::Hash;
 mod state;
 use self::state::State;
 
+mod bitset;
 mod context;
 mod run;
+pub use self::bitset::BitSet;
 
 #[cfg(test)]
 mod test;

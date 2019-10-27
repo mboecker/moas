@@ -1,63 +1,57 @@
 //! Implements a variant of the graph isomorphism algorithm by Weisefiler and Lehman.
 
 use crate::graph::Graph;
-use std::collections::HashMap;
-use std::iter::FromIterator;
+use std::collections::BTreeMap;
+use std::collections::BTreeSet;
 
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-struct Name {
-    neighbors: [usize; 8],
-}
-
-impl FromIterator<(usize, usize)> for Name {
-    fn from_iter<I: IntoIterator<Item = (usize, usize)>>(iter: I) -> Self {
-        let mut neighbors = [0; 8];
-
-        for (i, (x, y)) in iter.into_iter().enumerate() {
-            if i < 4 {
-                neighbors[i * 2] = x;
-                neighbors[i * 2 + 1] = y;
-            }
-        }
-
-        Name { neighbors }
-    }
-}
+type Name = [(u8, usize); 4];
 
 /// Relabels the graph according to its immediate neighbors.
 pub fn relabel(g: &mut Graph) {
-    use itertools::Itertools;
+    debug_assert!((0..g.size())
+        .map(|i| g.neighbors(i).map(|j| g.bonds().get(i, j)).sum())
+        .all(|x: u8| x < 5));
 
-    let mut names: HashMap<usize, Name> = HashMap::new();
+    // Contains a new name for every node.
+    let mut names: Vec<Name> = Vec::with_capacity(g.size());
+
+    // Contains an index of the names in sorted order.
+    let mut name_ids: BTreeSet<Name> = BTreeSet::new();
 
     // relabel all the nodes
     for i in 0..g.size() {
-        // The new name for a node is its own label, followed by a list of its neighbors.
+        // The new name for a node is a list of its neighbors.
         // For that, we iterate through all of its adjacent nodes
         // and note the node label as well as the amount of edges between the node and its neighbor.
-        let name = g
-            .neighbors(i as usize)
-            .map(|j| (*g.bonds().get(i as usize, j) as usize, g.atoms()[j]))
-            .sorted()
-            .collect();
+        let mut name: [(u8, usize); 4] = [(0, 0); 4];
 
-        names.insert(i, name);
+        for (idx, p) in g
+            .neighbors(i as usize)
+            .map(|j| (*g.bonds().get(i as usize, j), g.atoms()[j]))
+            .enumerate()
+            .take(4)
+        {
+            name[idx] = p;
+        }
+
+        // The adjacent nodes are sorted by node label and number of bonds.
+        name.sort_unstable();
+
+        // Insert into arrays.
+        names.push(name);
+        name_ids.insert(name);
     }
 
     // assign ids to the names, where the lexicographically smallest name has the smallest id.
-    let mut tmp: Vec<_> = names.values().cloned().collect();
-    tmp.sort_unstable();
-
-    let name_ids: HashMap<Name, usize> = tmp
+    let name_ids: BTreeMap<Name, usize> = name_ids
         .into_iter()
-        .dedup()
         .enumerate()
-        .map(|(a, b)| (b, a))
+        .map(|(name_id, name)| (name, name_id))
         .collect();
 
-    let chunk = name_ids.values().max().unwrap() + 1;
+    let chunk = name_ids.len() + 2;
     for (i, a) in g.atoms_mut().iter_mut().enumerate() {
-        let b = *a * chunk + name_ids[&names[&i]];
+        let b = *a * chunk + name_ids[&names[i]];
         // println!("atom {}: {} + {} = {}", i, a, atoms2[i], b);
         *a = b;
     }
@@ -77,16 +71,14 @@ fn test_relabel() {
 }
 
 #[test]
-fn test_relabel_smol() {
+fn test_relabel_smol_variant1() {
     let j = r#"{"atoms": [[1, 1], [2, 1], [3, 1]],
                 "bonds": [[1, 2, 1], [1, 3, 1]]}"#;
     let mut g = crate::graph::Graph::new(j);
     println!("{:?}", g);
 
-    for _ in 1..10 {
-        relabel(&mut g);
-        println!("{:?}", g);
-    }
+    relabel(&mut g);
+    println!("{:?}", g);
 }
 
 #[test]
@@ -96,8 +88,17 @@ fn test_relabel_smol_variant2() {
     let mut g = crate::graph::Graph::new(j);
     println!("{:?}", g);
 
-    for _ in 1..10 {
-        relabel(&mut g);
-        println!("{:?}", g);
-    }
+    relabel(&mut g);
+    println!("{:?}", g);
+}
+
+#[test]
+fn test_relabel_smol_variant3() {
+    let j = r#"{"atoms": [[1, 1], [2, 1], [3, 1]],
+                "bonds": [[1, 3, 1], [2, 3, 1]]}"#;
+    let mut g = crate::graph::Graph::new(j);
+    println!("{:?}", g);
+
+    relabel(&mut g);
+    println!("{:?}", g);
 }
