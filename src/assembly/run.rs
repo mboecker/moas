@@ -85,8 +85,9 @@ where
             println!("tip3");
 
             for x in new_queue.into_iter() {
-                if /*x.used.score() >= max_score &&*/ !self.q_passive.contains(&x)
-                {
+                if
+                /*x.used.score() >= max_score &&*/
+                !self.q_passive.contains(&x) {
                     self.q_active.insert(x);
                 }
                 if self.q_active.len() >= 30 {

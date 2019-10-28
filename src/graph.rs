@@ -319,7 +319,7 @@ pub fn random_graph(n: usize) -> Graph {
                         0
                     };
 
-                    if counts[i] <= 4-v && counts[j] <= 4-v {
+                    if counts[i] <= 4 - v && counts[j] <= 4 - v {
                         counts[i] += v;
                         counts[j] += v;
                         *g.bonds_mut().get_mut(i, j) = v;
