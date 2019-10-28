@@ -36,13 +36,13 @@ fn test_assembly(structure: &str) {
     test_rings(structure);
 }
 
-#[test]
-#[ignore]
-fn dioxaziridine() {
-    let j = r#"{"atoms": [[1, 8], [2,8], [3,6], [4,1]],
-                "bonds": [[1,2,1], [2,3,1], [1,3,1], [3,4,1]] }"#;
-    test_assembly(j);
-}
+// #[test]
+// #[ignore]
+// fn dioxaziridine() {
+//     let j = r#"{"atoms": [[1, 8], [2,8], [3,6], [4,1]],
+//                 "bonds": [[1,2,1], [2,3,1], [1,3,1], [3,4,1]] }"#;
+//     test_assembly(j);
+// }
 
 #[test]
 #[ignore]
@@ -54,7 +54,6 @@ fn benzol() {
 }
 
 #[test]
-#[ignore]
 fn ethanol() {
     let j = r#"{"atoms": [[1, 8], [2, 6], [3, 6], [4, 1], [5, 1], [6, 1], [7, 1], [8, 1], [9, 1]],
                 "bonds": [[1, 2, 1], [1, 9, 1], [2, 3, 1], [2, 4, 1], [2, 5, 1], [3, 6, 1], [3, 7, 1], [3, 8, 1]]}"#;
