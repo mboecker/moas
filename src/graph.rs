@@ -213,7 +213,7 @@ impl Graph {
         other
     }
 
-    pub fn is_interesting(&self) -> usize {
+    pub fn number_of_edges(&self) -> usize {
         use itertools::Itertools;
         (0..self.size())
             .tuple_combinations::<(_, _)>()
@@ -229,30 +229,34 @@ impl Graph {
 }
 
 impl Hash for Graph {
+    /// This function must result in the same hash for equal (isomorph) graphs.
     fn hash<H: Hasher>(&self, state: &mut H) {
-        // This function must result in the same hash for equal (isomorph) graphs.
-
-        // For each combination of node labels, hash the amount of edges between these.
+        // For each combination of node labels, count the edges between these.
         let mut edge_counts: BTreeMap<(usize, usize), usize> = BTreeMap::new();
 
-        // Hash the node labels and their occurance count in sorted order, so that their ordering is consistent in different graphs.
+        // Hash the node labels and their occurance count in sorted order,
+        // so that their ordering is consistent in different graphs.
         let mut label_counts = BTreeMap::new();
 
         for i in 0..self.size() {
-            // Increate label count of current node.
+            // Increase label count of current node.
             let element1 = self.atoms()[i];
             *label_counts.entry(element1).or_insert(0) += 1;
 
             for j in 0..i {
                 let element2 = self.atoms()[j];
-                if element1 > element2 {
-                    *edge_counts.entry((element2, element1)).or_default() += 1;
+
+                // normalize element tuple
+                let tuple = if element1 > element2 {
+                    (element2, element1)
                 } else {
-                    *edge_counts.entry((element1, element2)).or_default() += 1;
-                }
+                    (element1, element2)
+                };
+                *edge_counts.entry(tuple).or_default() += 1;
             }
         }
 
+        // Hash some values that are equal on isomorphic graphs.
         label_counts.hash(state);
         edge_counts.hash(state);
     }

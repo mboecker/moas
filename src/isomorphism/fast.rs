@@ -14,6 +14,10 @@ pub fn are_isomorphic(g1: &Graph, g2: &Graph) -> bool {
         return false;
     }
 
+    if g1.number_of_edges() != g2.number_of_edges() {
+        return false;
+    }
+
     // Check if they have the same hash value.
     let mut hasher1 = DefaultHasher::new();
     let mut hasher2 = hasher1.clone();

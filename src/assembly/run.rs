@@ -69,8 +69,6 @@ where
             println!("Duration: {:.2}s", duration.as_secs_f64());
             println!();
 
-            println!("tip1");
-
             // Move active graphs into the passive graphs.
             self.q_passive.extend(self.q_active.drain());
 
@@ -78,24 +76,17 @@ where
                 break;
             }
 
-            println!("tip2");
-
             let max_score = new_queue.iter().map(|s| s.used.score()).max().unwrap();
 
-            println!("tip3");
-
             for x in new_queue.into_iter() {
-                if
-                /*x.used.score() >= max_score &&*/
-                !self.q_passive.contains(&x) {
+                if x.used.score() >= max_score && !self.q_passive.contains(&x) {
                     self.q_active.insert(x);
                 }
-                if self.q_active.len() >= 30 {
-                    break;
-                }
-            }
 
-            println!("tip4");
+                // if self.q_active.len() >= 30 {
+                //     break;
+                // }
+            }
 
             if self.q_active.is_empty() {
                 break;
@@ -117,9 +108,9 @@ where
             .reduce(
                 || HashSet::new(),
                 |mut a, b| {
-                    println!("merge started");
+                    // println!("merge started");
                     a.extend(b);
-                    println!("merge stopped");
+                    // println!("merge stopped");
                     a
                 },
             )

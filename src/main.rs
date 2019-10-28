@@ -61,34 +61,34 @@ fn main() {
 
         let g = graph::Graph::new(x.structure);
 
-        // {
-        //     use std::io::Write;
-        //     let filename = "trace/original.dot";
-        //     let mut f = std::fs::File::create(filename).unwrap();
-        //     writeln!(&mut f, "graph g {{").unwrap();
-        //     g.dump(&mut f, 0, true).unwrap();
-        //     writeln!(&mut f, "}}").unwrap();
-        // }
+        {
+            use std::io::Write;
+            let filename = "trace/original.dot";
+            let mut f = std::fs::File::create(filename).unwrap();
+            writeln!(&mut f, "graph g {{").unwrap();
+            g.dump(&mut f, 0, true).unwrap();
+            writeln!(&mut f, "}}").unwrap();
+        }
 
         // determine the graphs' subgraphs.
         let sg = subgraphs::variants::SubgraphsAndRings::new(&g);
 
-        // {
-        //     let filename = "trace/subgraphs.dot";
-        //     let f = std::fs::File::create(filename).unwrap();
-        //     crate::prelude::dump_set(f, sg.all_subgraphs()).unwrap();
-        // }
+        {
+            let filename = "trace/subgraphs.dot";
+            let f = std::fs::File::create(filename).unwrap();
+            crate::prelude::dump_set(f, sg.all_subgraphs()).unwrap();
+        }
 
         // re-assemble the graph
         let gs = assemble(sg);
 
         assert!(gs.contains(&g));
 
-        // {
-        //     let filename = "trace/result.dot";
-        //     let f = std::fs::File::create(filename).unwrap();
-        //     crate::prelude::dump_set(f, gs.iter()).unwrap();
-        // }
+        {
+            let filename = "trace/result.dot";
+            let f = std::fs::File::create(filename).unwrap();
+            crate::prelude::dump_set(f, gs.iter()).unwrap();
+        }
     }
 
     crate::STATISTICS.lock().unwrap().dump();
