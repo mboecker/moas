@@ -1,7 +1,6 @@
 use super::State;
 use crate::subgraphs::Subgraphs;
 use crate::Graph;
-use rayon::prelude::*;
 use std::cell::RefCell;
 use std::collections::BTreeMap;
 use std::collections::HashSet;
@@ -107,15 +106,10 @@ where
 
     fn iterate(&self) -> HashSet<State<S>> {
         self.q_active
-            .par_iter()
+            .iter()
             .map(|state| self.explore_state(state))
-            .reduce(
-                || HashSet::new(),
-                |mut a, b| {
-                    a.extend(b);
-                    a
-                },
-            )
+            .flatten()
+            .collect()
     }
 
     /// Explores one of the current states by trying to attach unused subgraphs.
