@@ -79,7 +79,9 @@ where
             // let max_score = new_queue.iter().map(|s| s.used.score()).max().unwrap();
 
             for x in new_queue.into_iter() {
-                if /*x.used.score() >= max_score &&*/ !self.q_passive.contains(&x) {
+                if
+                /*x.used.score() >= max_score &&*/
+                !self.q_passive.contains(&x) {
                     self.q_active.insert(x);
                 }
 
@@ -92,6 +94,8 @@ where
                 break;
             }
         }
+
+        println!("final selection");
 
         let subgraphs = self.subgraphs;
         self.q_passive
@@ -108,9 +112,7 @@ where
             .reduce(
                 || HashSet::new(),
                 |mut a, b| {
-                    // println!("merge started");
                     a.extend(b);
-                    // println!("merge stopped");
                     a
                 },
             )
@@ -124,12 +126,28 @@ where
         let attached_nodes: Vec<BitSet> = (0..state.g.size()).map(|_| BitSet::default()).collect();
         let attached_nodes = Rc::new(RefCell::new(attached_nodes));
 
+        let anchor = state
+            .g
+            .atoms()
+            .iter()
+            .enumerate()
+            .filter(|(i, a)| {
+                state.g.neighbors(*i).map(|j| state.g.bonds().get(*i,j)).sum::<u8>() < crate::get_max_bonds_for_element(**a)
+            })
+            .map(|(i, _)| i)
+            .min();
+
+        if anchor.is_none() {
+            return HashSet::new();
+        }
+
+        let anchor = anchor.unwrap();
+
         // Iterate over all the subgraphs that are still available.
         self.subgraphs
             .attachable_subgraphs()
             .filter_map(|sg| {
                 if state.used.amount_of(sg) >= self.subgraphs.amount_of(sg) {
-                    // println!("skipped this sg");
                     return None;
                 }
 
@@ -159,12 +177,14 @@ where
                                     let n_bonds = *sg.bonds().get(sgi, new_node);
                                     let label = sg.atoms()[new_node] as u8;
 
-                                    if attached_nodes.borrow()[gi].is_set(label, n_bonds) {
-                                        // println!("this thing made it break");
+                                    if gi != anchor {
                                         return None;
-                                    } else {
-                                        Some((gi, label, n_bonds))
                                     }
+                                    if attached_nodes.borrow()[gi].is_set(label, n_bonds) {
+                                        return None;
+                                    }
+
+                                    Some((gi, label, n_bonds))
                                 } else {
                                     None
                                 };
