@@ -40,7 +40,13 @@ struct CompoundEntry {
 
 fn main() {
     let conn = Connection::open("sqlite/pubchem.db").unwrap();
-    let cid = 2519;
+
+    // caffeine
+    // let cid = 2519;
+
+    // porphorin
+    let cid = 66868;
+
     let sql = format!("SELECT cid, structure, is_contiguous, n_atoms, n_edges FROM compounds where cid = {} LIMIT 1", cid);
     let mut stmt = conn.prepare(&sql).unwrap();
     let iter = stmt

@@ -76,10 +76,10 @@ where
                 break;
             }
 
-            let max_score = new_queue.iter().map(|s| s.used.score()).max().unwrap();
+            // let max_score = new_queue.iter().map(|s| s.used.score()).max().unwrap();
 
             for x in new_queue.into_iter() {
-                if x.used.score() >= max_score && !self.q_passive.contains(&x) {
+                if /*x.used.score() >= max_score &&*/ !self.q_passive.contains(&x) {
                     self.q_active.insert(x);
                 }
 
