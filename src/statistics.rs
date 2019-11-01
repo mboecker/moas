@@ -4,6 +4,10 @@ use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::sync::Mutex;
 
+pub const fn trace_enabled() -> bool {
+    false
+}
+
 lazy_static! {
     pub static ref STATISTICS: Mutex<Statistics> = Mutex::new(Statistics::default());
 }
