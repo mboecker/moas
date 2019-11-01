@@ -1,11 +1,19 @@
+use dotenv;
+
 use crate::Graph;
 use lazy_static::lazy_static;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::sync::Mutex;
 
-pub const fn trace_enabled() -> bool {
-    false
+pub fn trace_enabled() -> bool {
+    dotenv::dotenv().ok();
+    let s = dotenv::var("MOAS_TRACE");
+    if let Ok(s) = s {
+        s.parse().unwrap()
+    } else {
+        false
+    }
 }
 
 lazy_static! {
@@ -30,7 +38,7 @@ impl Statistics {
 
     pub fn dump(&mut self) {
         use std::io::Write;
-        {
+        if trace_enabled() {
             let mut f = std::fs::File::create("statistics.txt").unwrap();
             for iter in self.proposed_graphs.keys() {
                 writeln!(
@@ -49,7 +57,7 @@ impl Statistics {
             }
         }
 
-        {
+        if trace_enabled() {
             let f = std::fs::File::create("invalid_subgraphs.dot").unwrap();
             crate::prelude::dump_set(f, self.invalid_graph.keys()).unwrap();
         }
