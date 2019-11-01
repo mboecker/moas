@@ -7,6 +7,9 @@ use std::collections::HashSet;
 use std::hash::Hash;
 use std::rc::Rc;
 
+#[cfg(feature = "parallel")]
+use rayon::prelude::*;
+
 pub struct Run<S>
 where
     S: Eq,
@@ -97,19 +100,45 @@ where
         println!("final selection");
 
         let subgraphs = self.subgraphs;
-        self.q_passive
+
+        #[cfg(feature = "parallel")]
+        return self
+            .q_passive
+            .into_par_iter()
+            .filter(|state| state.is_successful(&subgraphs))
+            .map(|state| state.g)
+            .collect();
+
+        #[cfg(not(feature = "parallel"))]
+        return self
+            .q_passive
             .into_iter()
             .filter(|state| state.is_successful(&subgraphs))
             .map(|state| state.g)
-            .collect()
+            .collect();
     }
 
     fn iterate(&self) -> HashSet<State<S>> {
-        self.q_active
+        #[cfg(feature = "parallel")]
+        return self
+            .q_active
+            .par_iter()
+            .map(|state| self.explore_state(state))
+            .reduce(
+                || HashSet::new(),
+                |mut a, b| {
+                    a.extend(b);
+                    a
+                },
+            );
+
+        #[cfg(not(feature = "parallel"))]
+        return self
+            .q_active
             .iter()
             .map(|state| self.explore_state(state))
             .flatten()
-            .collect()
+            .collect();
     }
 
     /// Explores one of the current states by trying to attach unused subgraphs.
