@@ -126,7 +126,12 @@ where
             .iter()
             .enumerate()
             .filter(|(i, a)| {
-                state.g.neighbors(*i).map(|j| state.g.bonds().get(*i,j)).sum::<u8>() < crate::get_max_bonds_for_element(**a)
+                state
+                    .g
+                    .neighbors(*i)
+                    .map(|j| state.g.bonds().get(*i, j))
+                    .sum::<u8>()
+                    < crate::get_max_bonds_for_element(**a)
             })
             .map(|(i, _)| i)
             .min();
