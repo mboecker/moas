@@ -49,7 +49,7 @@ where
     pub fn assemble(mut self) -> HashSet<Graph> {
         for iter in 0.. {
             use chrono::Utc;
-            {
+            if crate::statistics::trace_enabled() {
                 let filename = format!("trace/iter_{}.dot", iter);
                 let f = std::fs::File::create(filename).unwrap();
                 crate::prelude::dump_set(f, self.q_active.iter().map(|s| &s.g)).unwrap();

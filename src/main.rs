@@ -67,7 +67,7 @@ fn main() {
 
         let g = graph::Graph::new(x.structure);
 
-        {
+        if crate::statistics::trace_enabled() {
             use std::io::Write;
             let filename = "trace/original.dot";
             let mut f = std::fs::File::create(filename).unwrap();
@@ -79,7 +79,7 @@ fn main() {
         // determine the graphs' subgraphs.
         let sg = subgraphs::variants::SubgraphsAndRings::new(&g);
 
-        {
+        if crate::statistics::trace_enabled() {
             let filename = "trace/subgraphs.dot";
             let f = std::fs::File::create(filename).unwrap();
             crate::prelude::dump_set(f, sg.all_subgraphs()).unwrap();
@@ -90,7 +90,7 @@ fn main() {
 
         assert!(gs.contains(&g));
 
-        {
+        if crate::statistics::trace_enabled() {
             let filename = "trace/result.dot";
             let f = std::fs::File::create(filename).unwrap();
             crate::prelude::dump_set(f, gs.iter()).unwrap();
