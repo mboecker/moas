@@ -17,6 +17,6 @@ jobs:
     - name: Run tests
       run: cargo test --verbose
     - name: Build parallel version
-      run: cargo build --feature parallel --verbose
+      run: cargo build --features parallel --verbose
     - name: Run parallel tests
-      run: cargo test --feature parallel --verbose
+      run: cargo test --features parallel --verbose
