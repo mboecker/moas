@@ -163,7 +163,7 @@ where
                     < crate::get_max_bonds_for_element(**a)
             })
             .map(|(i, _)| i)
-            .min();
+            .next();
 
         if anchor.is_none() {
             return HashSet::new();
