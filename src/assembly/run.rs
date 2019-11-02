@@ -220,11 +220,6 @@ where
                             // Actually perform the attachment and create a graph.
                             let g = crate::attachment::perform(&state.g, &sg, mapping, new_node);
 
-                            crate::STATISTICS
-                                .lock()
-                                .unwrap()
-                                .graph_proposed(self.current_iter);
-
                             // Rule out graphs with too many atom bonds.
                             for i in 0..g.size() {
                                 let s: u8 = (0..g.size()).map(|j| g.bonds().get(i, j)).sum();
@@ -239,10 +234,6 @@ where
                             // Check, if by attaching this subgraph in this way,
                             // we used more subgraphs than we're allowed to.
                             if used_subgraphs.is_subset_of(&self.subgraphs) {
-                                crate::STATISTICS
-                                    .lock()
-                                    .unwrap()
-                                    .valid_graph_proposed(self.current_iter);
 
                                 // mark this attachment option
                                 if let Some((gi, label, n_bonds)) = node_attachment_information {
@@ -251,7 +242,6 @@ where
 
                                 Some(State::new(g, used_subgraphs))
                             } else {
-                                crate::STATISTICS.lock().unwrap().report_invalid_graph(g);
                                 None
                             }
                         }),

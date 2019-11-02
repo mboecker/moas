@@ -57,6 +57,7 @@ impl Graph {
         Graph { n, atoms, bonds }
     }
 
+    #[cfg(test)]
     pub fn debug_print(&self) {
         for (i, l) in self.atoms.iter().enumerate() {
             println!("Node {}: {}", i, l);
@@ -195,6 +196,7 @@ impl Graph {
     /// Changes the internal order of the nodes in this graph.
     /// This function is for testing only.
     #[must_use]
+    #[cfg(test)]
     pub fn permutate(&self, order: &[usize]) -> Graph {
         let mut other = self.clone();
 
@@ -293,6 +295,7 @@ fn get_element_label_from_element_id(id: &usize) -> &'static str {
     }
 }
 
+#[cfg(test)]
 pub fn random_graph(n: usize) -> Graph {
     use rand::Rng;
 

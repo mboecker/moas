@@ -1,5 +1,3 @@
-#![feature(let_chains)]
-
 #![feature(test)]
 extern crate test;
 
@@ -19,7 +17,6 @@ use assembly::assemble;
 use attachment::attach;
 use graph::Graph;
 use isomorphism::are_isomorphic;
-use statistics::STATISTICS;
 
 pub fn get_max_bonds_for_element(a: usize) -> u8 {
     match a {
@@ -31,21 +28,22 @@ pub fn get_max_bonds_for_element(a: usize) -> u8 {
     }
 }
 
-#[derive(Debug)]
-/// An entry from the SQLite Database of all the pubchem molecules.
-struct CompoundEntry {
-    pub cid: i64,
-    pub structure: String,
-    pub is_contiguous: bool,
-    pub atoms: i64,
-    pub bonds: i64,
-}
-
 fn main() {
+
+    #[derive(Debug)]
+    /// An entry from the SQLite Database of all the pubchem molecules.
+    struct CompoundEntry {
+        pub cid: i64,
+        pub structure: String,
+        pub is_contiguous: bool,
+        pub atoms: i64,
+        pub bonds: i64,
+    }
+
     let matches = App::new("moas")
                     .version("0.1")
                     .author("Marvin Böcker <marvin.boecker@tu-dortmund.de>")
-                    .about("brute force assembler for molecular graphs")
+                    .about("A brute-force assembler for molecular graphs")
                     .arg(Arg::with_name("compound id")
                         .short("c")
                         .long("cid")
@@ -70,7 +68,7 @@ fn main() {
     let conn = Connection::open(sqlite_name).unwrap();
 
     if let Some(cid) = matches.value_of("compound id") {
-        let sql = format!("SELECT cid, structure, is_contiguous, n_atoms, n_edges FROM compounds where cid = {} LIMIT 1", cid);
+        let sql = format!("SELECT cid, structure, is_contiguous, n_atoms, n_edges FROM compounds WHERE cid = {} LIMIT 1", cid);
         let mut stmt = conn.prepare(&sql).unwrap();
         let iter = stmt
             .query_map(NO_PARAMS, |row| {
@@ -123,7 +121,7 @@ fn main() {
 
     if let Some(min) = matches.value_of("min") {
         if let Some(max) = matches.value_of("max") {
-            let sql = format!("SELECT cid, structure, is_contiguous, n_atoms, n_edges FROM compounds where cid >= {} AND cid < {} LIMIT 1", min, max);
+            let sql = format!("SELECT cid, structure, is_contiguous, n_atoms, n_edges FROM compounds WHERE is_contiguous != 0 AND cid >= {} AND cid < {}", min, max);
             let mut stmt = conn.prepare(&sql).unwrap();
             let iter = stmt
                 .query_map(NO_PARAMS, |row| {
@@ -147,9 +145,14 @@ fn main() {
                 let sg = subgraphs::variants::SubgraphsAndRings::new(&g);
 
                 // re-assemble the graph
+                let start = std::time::Instant::now();
                 let gs = assemble(sg);
+                let dur = std::time::Instant::now() - start;
 
-                assert!(gs.contains(&g));
+                // cid, duplicates, secs
+                println!("{cid}, {dup}, {dur}", cid = x.cid, dup = gs.len(), dur = dur.as_secs_f64());
+
+                assert!(gs.contains(&g), "The assembly of cid {} failed.", x.cid);
 
                 if crate::statistics::trace_enabled() {
                     let filename = format!("trace/results_{}.dot", x.cid);
