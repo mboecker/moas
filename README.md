@@ -1,4 +1,4 @@
-[![Actions Status](https://github.com/mboecker/moas/workflows/rust/badge.svg)](https://github.com/mboecker/moas/actions)
+[![Actions Status](https://github.com/mboecker/moas/workflows/Rust/badge.svg)](https://github.com/mboecker/moas/actions)
 
 # moas - Molecular Assembler
 A brute-force implementation to molecular assembly in Rust.
