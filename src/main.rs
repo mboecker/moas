@@ -1,3 +1,11 @@
+//! # moas - Molecular Assembler
+//! 
+//! A brute-force assembler for molecular graphs.
+//! Performs a total enumeration of all possible graphs given a multiset of induced subgraphs.
+
+#![deny(warnings)]
+#![deny(missing_docs)]
+
 #![feature(test)]
 extern crate test;
 
@@ -18,6 +26,10 @@ use attachment::attach;
 use graph::Graph;
 use isomorphism::are_isomorphic;
 
+/// Returns the maximum number of bonds an element has.
+/// Data for most element is still missing, sadly.
+/// Atoms will be filled with bonded atoms until they are full.
+/// This will cause assembly to fail, if this value is inaccurate.
 pub fn get_max_bonds_for_element(a: usize) -> u8 {
     match a {
         1 => 1,
