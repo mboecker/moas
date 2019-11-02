@@ -5,6 +5,8 @@ mod wl;
 
 use crate::Graph;
 
+/// Returns true if and only if there is a bijective mapping function between the two graphs,
+/// such that they are isomorphic.
 pub fn are_isomorphic(g1: &Graph, g2: &Graph) -> bool {
     // Check some graph features first.
     // If these dont match, the graphs cannot be isomorphic.

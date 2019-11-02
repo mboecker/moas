@@ -21,16 +21,16 @@ mod prelude;
 mod statistics;
 mod subgraphs;
 
-use assembly::assemble;
+pub use assembly::assemble;
+pub use graph::Graph;
+pub use isomorphism::are_isomorphic;
 use attachment::attach;
-use graph::Graph;
-use isomorphism::are_isomorphic;
 
 /// Returns the maximum number of bonds an element has.
 /// Data for most element is still missing, sadly.
 /// Atoms will be filled with bonded atoms until they are full.
 /// This will cause assembly to fail, if this value is inaccurate.
-pub fn get_max_bonds_for_element(a: usize) -> u8 {
+pub(crate) fn get_max_bonds_for_element(a: usize) -> u8 {
     match a {
         1 => 1,
         6 => 4,

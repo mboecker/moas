@@ -5,8 +5,7 @@ use std::hash::{Hash, Hasher};
 use std::io::Write;
 
 /// Represents a molecular graph.
-/// size_of = 16 + 8 * n + 16 * 4 * n bit
-/// That means that 50 subgraphs of size 5 use less than 2 KiB of space.
+/// Graphs are not resizeable.
 #[derive(Debug, Clone, Serialize)]
 pub struct Graph {
     // How many atoms has this molecule?
@@ -20,12 +19,16 @@ pub struct Graph {
 }
 
 impl Graph {
+
+    /// Creates an empty graph with the specified size.
     pub fn with_size(n: usize) -> Graph {
         let atoms = vec![0usize; n];
         let bonds: Matrix<u8> = Matrix::new(n);
         Graph { n, atoms, bonds }
     }
 
+    /// Parses the given JSON and transforms it into a graph object.
+    /// The JSON format is documented in JSON_FORMAT.MD
     pub fn new(json: impl AsRef<str>) -> Graph {
         use std::convert::TryInto;
 
@@ -70,6 +73,7 @@ impl Graph {
         }
     }
 
+    /// Clones this graph while adding `n` new nodes/atoms with element number 0.
     pub fn clone_with_extraspace(&self, n: usize) -> Graph {
         use itertools::Itertools;
 
@@ -87,22 +91,27 @@ impl Graph {
         g
     }
 
+    /// Returns the number of atoms in this graph.
     pub fn size(&self) -> usize {
         self.n
     }
 
+    /// Returns the bond matrix of this graph.
     pub fn bonds(&self) -> &Matrix<u8> {
         &self.bonds
     }
 
+    /// Returns the bond matrix of this graph, as a mutable reference.
     pub fn bonds_mut(&mut self) -> &mut Matrix<u8> {
         &mut self.bonds
     }
 
+    /// Returns the elements of the atoms in this graph.
     pub fn atoms(&self) -> &Vec<usize> {
         &self.atoms
     }
 
+    /// Returns the elements of the atoms in this graph, as a mutable reference.
     pub fn atoms_mut(&mut self) -> &mut Vec<usize> {
         &mut self.atoms
     }
@@ -129,6 +138,7 @@ impl Graph {
         g
     }
 
+    /// Returns true if this graph is contiguous.
     pub fn is_contiguous(&self) -> bool {
         let mut h = HashSet::new();
         self.is_contiguous_helper(0, &mut h);
@@ -215,6 +225,7 @@ impl Graph {
         other
     }
 
+    /// Returns the number of edges this graph has.
     pub fn number_of_edges(&self) -> usize {
         use itertools::Itertools;
         (0..self.size())
