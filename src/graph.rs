@@ -19,7 +19,6 @@ pub struct Graph {
 }
 
 impl Graph {
-
     /// Creates an empty graph with the specified size.
     pub fn with_size(n: usize) -> Graph {
         let atoms = vec![0usize; n];
@@ -238,6 +237,17 @@ impl Graph {
     /// Determines if this graph is one big circle.
     pub fn is_circular(&self) -> bool {
         (0..self.size()).all(|i| self.neighbors(i).count() == 2)
+    }
+
+    /// Returns the node id of the first atom, that has free bonds.
+    pub fn first_unfull_node_id(&self) -> Option<usize> {
+        (0..self.size())
+            .filter(|&i| {
+                let e = self.atoms[i];
+                let n: u8 = self.neighbors(i).map(|j| self.bonds.get(i, j)).sum();
+                n < crate::get_max_bonds_for_element(e)
+            })
+            .next()
     }
 }
 

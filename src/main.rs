@@ -1,16 +1,15 @@
 //! # moas - Molecular Assembler
-//! 
+//!
 //! A brute-force assembler for molecular graphs.
 //! Performs a total enumeration of all possible graphs given a multiset of induced subgraphs.
 
 #![deny(warnings)]
 #![deny(missing_docs)]
-
 #![feature(test)]
 extern crate test;
 
+use clap::{App, Arg};
 use rusqlite::{Connection, NO_PARAMS};
-use clap::{Arg, App};
 
 mod assembly;
 mod attachment;
@@ -22,9 +21,9 @@ mod statistics;
 mod subgraphs;
 
 pub use assembly::assemble;
+use attachment::attach;
 pub use graph::Graph;
 pub use isomorphism::are_isomorphic;
-use attachment::attach;
 
 /// Returns the maximum number of bonds an element has.
 /// Data for most element is still missing, sadly.
@@ -41,7 +40,6 @@ pub(crate) fn get_max_bonds_for_element(a: usize) -> u8 {
 }
 
 fn main() {
-
     #[derive(Debug)]
     /// An entry from the SQLite Database of all the pubchem molecules.
     struct CompoundEntry {
@@ -53,30 +51,40 @@ fn main() {
     }
 
     let matches = App::new("moas")
-                    .version("0.1")
-                    .author("Marvin Böcker <marvin.boecker@tu-dortmund.de>")
-                    .about("A brute-force assembler for molecular graphs")
-                    .arg(Arg::with_name("compound id")
-                        .short("c")
-                        .long("cid")
-                        .help("Dis- and reassemble the specified compound from the PubChem database.")
-                        .takes_value(true))
-                    .arg(Arg::with_name("database file name")
-                        .short("d")
-                        .long("database")
-                        .help("Specify the name of the SQLite database containing the compound data.")
-                        .takes_value(true))
-                    .arg(Arg::with_name("min")
-                        .long("min")
-                        .help("Dis- and reassemble the compounds between min and max.")
-                        .takes_value(true))
-                    .arg(Arg::with_name("max")
-                        .long("max")
-                        .help("Dis- and reassemble the compounds between min and max.")
-                        .takes_value(true))
-                    .get_matches();
+        .version("0.1")
+        .author("Marvin Böcker <marvin.boecker@tu-dortmund.de>")
+        .about("A brute-force assembler for molecular graphs")
+        .arg(
+            Arg::with_name("compound id")
+                .short("c")
+                .long("cid")
+                .help("Dis- and reassemble the specified compound from the PubChem database.")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("database file name")
+                .short("d")
+                .long("database")
+                .help("Specify the name of the SQLite database containing the compound data.")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("min")
+                .long("min")
+                .help("Dis- and reassemble the compounds between min and max.")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("max")
+                .long("max")
+                .help("Dis- and reassemble the compounds between min and max.")
+                .takes_value(true),
+        )
+        .get_matches();
 
-    let sqlite_name = matches.value_of("database file name").unwrap_or("sqlite/pubchem.db");
+    let sqlite_name = matches
+        .value_of("database file name")
+        .unwrap_or("sqlite/pubchem.db");
     let conn = Connection::open(sqlite_name).unwrap();
 
     if let Some(cid) = matches.value_of("compound id") {
@@ -162,7 +170,12 @@ fn main() {
                 let dur = std::time::Instant::now() - start;
 
                 // cid, duplicates, secs
-                println!("{cid}, {dup}, {dur}", cid = x.cid, dup = gs.len(), dur = dur.as_secs_f64());
+                println!(
+                    "{cid}, {dup}, {dur}",
+                    cid = x.cid,
+                    dup = gs.len(),
+                    dur = dur.as_secs_f64()
+                );
 
                 assert!(gs.contains(&g), "The assembly of cid {} failed.", x.cid);
 

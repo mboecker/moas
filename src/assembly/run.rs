@@ -3,6 +3,7 @@ use crate::subgraphs::Subgraphs;
 use crate::Graph;
 use std::cell::RefCell;
 use std::collections::BTreeMap;
+// use std::collections::BTreeSet;
 use std::collections::HashSet;
 use std::hash::Hash;
 use std::rc::Rc;
@@ -71,33 +72,26 @@ where
             println!("Duration: {:.2}s", duration.as_secs_f64());
             println!();
 
-            // Move active graphs into the passive graphs.
+            // move things from q_active to q_passive if theyre less or equal to the min.
+            // this minimum is the first free node in the current active queue.
+            // let min = self.q_active.iter().min().unwrap();
+
             self.q_passive.extend(self.q_active.drain());
 
             if new_queue.is_empty() {
                 break;
             }
 
-            // let max_score = new_queue.iter().map(|s| s.used.score()).max().unwrap();
-
             for x in new_queue.into_iter() {
-                if
-                /*x.used.score() >= max_score &&*/
-                !self.q_passive.contains(&x) {
+                if !self.q_passive.contains(&x) {
                     self.q_active.insert(x);
                 }
-
-                // if self.q_active.len() >= 30 {
-                //     break;
-                // }
             }
 
             if self.q_active.is_empty() {
                 break;
             }
         }
-
-        println!("final selection");
 
         let subgraphs = self.subgraphs;
 
@@ -133,12 +127,16 @@ where
             );
 
         #[cfg(not(feature = "parallel"))]
-        return self
-            .q_active
-            .iter()
-            .map(|state| self.explore_state(state))
-            .flatten()
-            .collect();
+        {
+            // let min = self.q_active.iter().min().unwrap();
+            return self
+                .q_active
+                .iter()
+                // .filter(|s| s <= &min)
+                .map(|state| self.explore_state(state))
+                .flatten()
+                .collect();
+        }
     }
 
     /// Explores one of the current states by trying to attach unused subgraphs.
@@ -234,7 +232,6 @@ where
                             // Check, if by attaching this subgraph in this way,
                             // we used more subgraphs than we're allowed to.
                             if used_subgraphs.is_subset_of(&self.subgraphs) {
-
                                 // mark this attachment option
                                 if let Some((gi, label, n_bonds)) = node_attachment_information {
                                     attached_nodes.borrow_mut()[gi].set_flag(label, n_bonds);
