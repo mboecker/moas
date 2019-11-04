@@ -50,6 +50,24 @@ where
         }
     }
 
+    // #[cfg(test)]
+    // pub fn with_starting_graph(subgraphs: S, g: Graph) -> Run<S> {
+    //     // Generate inital state.
+    //     let sg = S::new(&g);
+    //     let state = State::new(g, sg);
+
+    //     let q_passive = HashSet::new();
+    //     let mut q_active = HashSet::new();
+    //     q_active.insert(state);
+
+    //     Run {
+    //         subgraphs,
+    //         q_active,
+    //         q_passive,
+    //         current_iter: 0,
+    //     }
+    // }
+
     pub fn assemble(mut self) -> HashSet<Graph> {
         for iter in 0.. {
             use chrono::Utc;
@@ -158,7 +176,7 @@ where
                     .neighbors(*i)
                     .map(|j| state.g.bonds().get(*i, j))
                     .sum::<u8>()
-                    < crate::get_max_bonds_for_element(**a)
+                    < crate::get_min_bonds_for_element(**a)
             })
             .map(|(i, _)| i)
             .next();
@@ -173,6 +191,8 @@ where
         self.subgraphs
             .attachable_subgraphs()
             .filter_map(|sg| {
+
+                // Skip this subgraph if we cant legally use it again.
                 if state.used.amount_of(sg) >= self.subgraphs.amount_of(sg) {
                     return None;
                 }
@@ -203,9 +223,23 @@ where
                                     let n_bonds = *sg.bonds().get(sgi, new_node);
                                     let label = sg.atoms()[new_node] as u8;
 
+                                    // Only the anchor can gain neighbors.
                                     if gi != anchor {
                                         return None;
                                     }
+
+                                    // If this atom cannot have another neighbor, skip this.
+                                    if state
+                                        .g
+                                        .neighbors(gi)
+                                        .map(|j| state.g.bonds().get(gi, j))
+                                        .sum::<u8>()
+                                        >= crate::get_max_bonds_for_element(state.g.atoms()[gi])
+                                    {
+                                        return None;
+                                    }
+
+                                    // If this has already been tried (see below), skip this attachment.
                                     if attached_nodes.borrow()[gi].is_set(label, n_bonds) {
                                         return None;
                                     }

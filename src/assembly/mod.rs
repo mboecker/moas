@@ -8,7 +8,7 @@ use self::state::State;
 
 mod bitset;
 mod context;
-mod run;
+pub(crate) mod run;
 pub use self::bitset::BitSet;
 
 #[cfg(test)]

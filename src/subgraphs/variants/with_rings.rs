@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::hash::Hash;
 use std::hash::Hasher;
 
-#[derive(Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SubgraphsAndRings {
     atoms: HashMap<Graph, usize>,
     subgraphs: HashMap<Graph, usize>,

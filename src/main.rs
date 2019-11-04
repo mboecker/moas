@@ -31,10 +31,24 @@ pub use isomorphism::are_isomorphic;
 /// This will cause assembly to fail, if this value is inaccurate.
 pub(crate) fn get_max_bonds_for_element(a: usize) -> u8 {
     match a {
-        1 => 1,
-        6 => 4,
-        7 => 3,
-        8 => 2,
+        1 => 1,  // hydrogen
+        6 => 4,  // carbon
+        7 => 4,  // nitrogen
+        8 => 2,  // oxygen
+        15 => 5, // phosphorus
+        16 => 6, // sulphur
+        _ => 4,
+    }
+}
+
+pub(crate) fn get_min_bonds_for_element(a: usize) -> u8 {
+    match a {
+        1 => 1,  // hydrogen
+        6 => 4,  // carbon
+        7 => 3,  // nitrogen
+        8 => 2,  // oxygen
+        15 => 5, // phosphorus
+        16 => 2, // sulphur
         _ => 4,
     }
 }
@@ -117,7 +131,7 @@ fn main() {
                 writeln!(&mut f, "}}").unwrap();
             }
 
-            // determine the graphs' subgraphs.
+            // determine the graph's subgraphs.
             let sg = subgraphs::variants::SubgraphsAndRings::new(&g);
 
             if crate::statistics::trace_enabled() {
