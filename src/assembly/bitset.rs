@@ -5,7 +5,9 @@ pub struct BitSet {
 impl BitSet {
     fn calc_idx(i1: u8, i2: u8) -> (usize, usize) {
         assert!(i1 < 128);
-        assert!(i2 < 3);
+        assert!(i2 > 0);
+        assert!(i2 < 4);
+        let i2 = i2 - 1;
         let i = i2 as usize * 128 + i1 as usize;
         (i / 8, i % 8)
     }
