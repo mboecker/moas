@@ -94,6 +94,12 @@ fn main() {
                 .help("Dis- and reassemble the compounds between min and max.")
                 .takes_value(true),
         )
+        .arg(
+            Arg::with_name("cidsfile")
+                .long("file")
+                .help("A file to read CIDs from.")
+                .takes_value(true),
+        )
         .get_matches();
 
     let sqlite_name = matches
@@ -155,7 +161,7 @@ fn main() {
 
     if let Some(min) = matches.value_of("min") {
         if let Some(max) = matches.value_of("max") {
-            let sql = format!("SELECT cid, structure, is_contiguous, n_atoms, n_edges FROM compounds WHERE is_contiguous != 0 AND cid >= {} AND cid < {}", min, max);
+            let sql = format!("SELECT cid, structure, is_contiguous, n_atoms, n_edges FROM compounds WHERE is_contiguous == 1 AND cid >= {} AND cid < {} AND common_bonds = 1 AND chnops_only = 1 AND n_atoms >= 3 AND n_atoms <= 15", min, max);
             let mut stmt = conn.prepare(&sql).unwrap();
             let iter = stmt
                 .query_map(NO_PARAMS, |row| {
@@ -173,6 +179,8 @@ fn main() {
             for x in iter {
                 use crate::subgraphs::Subgraphs;
 
+                print!("{cid}", cid = x.cid);
+
                 let g = graph::Graph::new(x.structure);
 
                 // determine the graphs' subgraphs.
@@ -184,14 +192,66 @@ fn main() {
                 let dur = std::time::Instant::now() - start;
 
                 // cid, duplicates, secs
-                println!(
-                    "{cid}, {dup}, {dur}",
-                    cid = x.cid,
-                    dup = gs.len(),
-                    dur = dur.as_secs_f64()
-                );
+                println!(", {dup}, {dur}", dup = gs.len(), dur = dur.as_secs_f64());
 
-                assert!(gs.contains(&g), "The assembly of cid {} failed.", x.cid);
+                // assert!(gs.contains(&g), "The assembly of cid {} failed.", x.cid);
+
+                if crate::statistics::trace_enabled() {
+                    let filename = format!("trace/results_{}.dot", x.cid);
+                    let f = std::fs::File::create(filename).unwrap();
+                    crate::prelude::dump_set(f, gs.iter()).unwrap();
+                }
+            }
+        }
+    }
+
+    if let Some(filename) = matches.value_of("cidsfile") {
+        use std::io::BufRead;
+        use std::io::BufReader;
+
+        let file = std::fs::File::open(filename).expect("Failed to open cids file.");
+        let file = BufReader::new(file);
+        let file_iter = file
+            .lines()
+            .map(|x| -> String { x.expect("Failed to read from cids file.") });
+
+        let sql =
+            "SELECT cid, structure, is_contiguous, n_atoms, n_edges FROM compounds WHERE cid = ? LIMIT 1";
+        let mut stmt = conn.prepare(&sql).unwrap();
+
+        for cid in file_iter {
+            let iter = stmt
+                .query_map(&[cid], |row| {
+                    Ok(CompoundEntry {
+                        cid: row.get(0)?,
+                        structure: row.get(1)?,
+                        is_contiguous: row.get(2)?,
+                        atoms: row.get(3)?,
+                        bonds: row.get(4)?,
+                    })
+                })
+                .unwrap()
+                .map(|x| x.unwrap());
+
+            for x in iter {
+                use crate::subgraphs::Subgraphs;
+
+                print!("{cid}", cid = x.cid);
+
+                let g = graph::Graph::new(x.structure);
+
+                // determine the graphs' subgraphs.
+                let sg = subgraphs::variants::SubgraphsAndRings::new(&g);
+
+                // re-assemble the graph
+                let start = std::time::Instant::now();
+                let gs = assemble(sg);
+                let dur = std::time::Instant::now() - start;
+
+                // cid, duplicates, secs
+                println!(", {dup}, {dur}", dup = gs.len(), dur = dur.as_secs_f64());
+
+                // assert!(gs.contains(&g), "The assembly of cid {} failed.", x.cid);
 
                 if crate::statistics::trace_enabled() {
                     let filename = format!("trace/results_{}.dot", x.cid);

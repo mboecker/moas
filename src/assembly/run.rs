@@ -81,14 +81,19 @@ where
             self.current_iter = iter;
             let start = std::time::Instant::now();
 
-            println!("Starting iteration {} at {}", iter, Utc::now().to_rfc2822());
-            println!("Active Queue: {}", self.q_active.len());
-            println!("Passive Queue: {}", self.q_passive.len());
+            if crate::statistics::trace_enabled() {
+                println!("Starting iteration {} at {}", iter, Utc::now().to_rfc2822());
+                println!("Active Queue: {}", self.q_active.len());
+                println!("Passive Queue: {}", self.q_passive.len());
+            }
 
             let new_queue = self.iterate();
-            let duration = std::time::Instant::now() - start;
-            println!("Duration: {:.2}s", duration.as_secs_f64());
-            println!();
+
+            if crate::statistics::trace_enabled() {
+                let duration = std::time::Instant::now() - start;
+                println!("Duration: {:.2}s", duration.as_secs_f64());
+                println!();
+            }
 
             // move things from q_active to q_passive if theyre less or equal to the min.
             // this minimum is the first free node in the current active queue.
@@ -191,7 +196,6 @@ where
         self.subgraphs
             .attachable_subgraphs()
             .filter_map(|sg| {
-
                 // Skip this subgraph if we cant legally use it again.
                 if state.used.amount_of(sg) >= self.subgraphs.amount_of(sg) {
                     return None;
