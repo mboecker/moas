@@ -28,7 +28,39 @@ impl Graph {
 
     /// Parses the given JSON and transforms it into a graph object.
     /// The JSON format is documented in JSON_FORMAT.MD
-    pub fn new(json: impl AsRef<str>) -> Graph {
+    pub fn from_json(json: impl AsRef<str>) -> Graph {
+        use std::convert::TryInto;
+
+        #[derive(serde::Deserialize, serde::Serialize)]
+        struct SqliteGraph {
+            atoms: Vec<(u16, usize, i8)>,
+            bonds: Vec<(u16, u16, u8)>,
+        };
+
+        let graph: SqliteGraph = serde_json::from_str(json.as_ref()).unwrap();
+        let n = graph.atoms.len().try_into().unwrap();
+        let mut atoms = vec![0usize; n];
+        let mut bonds: Matrix<u8> = Matrix::new(n);
+
+        for (i, a, charge) in graph.atoms {
+            let j = i as usize - 1;
+            atoms[j] = crate::Atoms::encode(a as u8, charge);
+        }
+
+        for (i, j, k) in graph.bonds {
+            let i = i as usize - 1;
+            let j = j as usize - 1;
+            let k = k as u8;
+            *bonds.get_mut(i, j) = k;
+            *bonds.get_mut(j, i) = k;
+        }
+
+        Graph { n, atoms, bonds }
+    }
+
+    /// Parses the given JSON and transforms it into a graph object.
+    /// The JSON format is documented in JSON_FORMAT.MD
+    pub fn from_old_json(json: impl AsRef<str>) -> Graph {
         use std::convert::TryInto;
 
         #[derive(serde::Deserialize, serde::Serialize)]
@@ -44,8 +76,7 @@ impl Graph {
 
         for (i, a) in graph.atoms {
             let j = i as usize - 1;
-            assert_eq!(atoms[j], 0);
-            atoms[j] = a;
+            atoms[j] = crate::Atoms::encode(a as u8, 0);
         }
 
         for (i, j, k) in graph.bonds {
@@ -62,7 +93,7 @@ impl Graph {
     #[cfg(test)]
     pub fn debug_print(&self) {
         for (i, l) in self.atoms.iter().enumerate() {
-            println!("Node {}: {}", i, l);
+            println!("Node {}: {:?}", i, l);
         }
 
         for i in 0..self.size() {
@@ -165,7 +196,7 @@ impl Graph {
     ) -> std::io::Result<()> {
         for (i, j) in self.atoms.iter().enumerate() {
             if use_element_names {
-                let label = get_element_label_from_element_id(j);
+                let label = crate::Atoms::label(*j as u16);
                 writeln!(f, r#"  {} [shape=circle, label="{}"];"#, i + offset, label)?;
             } else {
                 writeln!(f, r#"  {} [shape=circle, label="{}"];"#, i + offset, j)?;
@@ -245,7 +276,7 @@ impl Graph {
             .filter(|&i| {
                 let e = self.atoms[i];
                 let n: u8 = self.neighbors(i).map(|j| self.bonds.get(i, j)).sum();
-                n < crate::get_bonds_for_element(e)
+                n < crate::Atoms::max_bonds(e as u16)
             })
             .next()
     }
@@ -272,7 +303,7 @@ impl Hash for Graph {
             // let mut triple = [0,0,0];
 
             for j in 0..i {
-                let v = *self.bonds().get(i,j);
+                let v = *self.bonds().get(i, j);
 
                 if v > 0 {
                     // Count a v-degree bond between these two elements.
@@ -305,29 +336,6 @@ impl PartialEq for Graph {
 }
 
 impl Eq for Graph {}
-
-fn get_element_label_from_element_id(id: &usize) -> &'static str {
-    match id {
-        1 => "H",
-        2 => "He",
-        3 => "Li",
-        4 => "Be",
-        5 => "B",
-        6 => "C",
-        7 => "N",
-        8 => "O",
-        9 => "F",
-        10 => "Ne",
-        11 => "Na",
-        12 => "Mg",
-        13 => "Al",
-        14 => "Si",
-        15 => "P",
-        16 => "S",
-        17 => "Cl",
-        _ => "??",
-    }
-}
 
 #[cfg(test)]
 pub fn random_graph(n: usize) -> Graph {
@@ -384,14 +392,14 @@ pub fn random_graph(n: usize) -> Graph {
 fn test_new_graph() {
     let j = r#"{"atoms": [[1, 8], [2, 8], [3, 8], [4, 8], [5, 7], [6, 6], [7, 6], [8, 6], [9, 6], [10, 6], [11, 6], [12, 6], [13, 6], [14, 6], [15, 1], [16, 1], [17, 1], [18, 1], [19, 1], [20, 1], [21, 1], [22, 1], [23, 1], [24, 1], [25, 1], [26, 1], [27, 1], [28, 1], [29, 1], [30, 1], [31, 1]],
                 "bonds": [[1, 7, 1], [1, 13, 1], [2, 12, 1], [3, 12, 2], [4, 13, 2], [5, 6, 1], [5, 8, 1], [5, 9, 1], [5, 10, 1], [6, 7, 1], [6, 15, 1], [6, 16, 1], [7, 11, 1], [7, 17, 1], [8, 18, 1], [8, 19, 1], [8, 20, 1], [9, 21, 1], [9, 22, 1], [9, 23, 1], [10, 24, 1], [10, 25, 1], [10, 26, 1], [11, 12, 1], [11, 27, 1], [11, 28, 1], [13, 14, 1], [14, 29, 1], [14, 30, 1], [14, 31, 1]]}"#;
-    let g = Graph::new(j);
+    let g = Graph::from_old_json(j);
     println!("{:?}", g);
 }
 
 #[test]
 fn test_error1() {
     let j = r#"{"atoms": [[1, 15], [2, 8], [3, 8], [4, 8], [5, 8], [6, 8], [7, 7], [8, 6], [9, 6], [10, 6], [11, 1], [12, 1], [13, 1], [14, 1], [15, 1], [16, 1], [17, 1], [18, 1]], "bonds": [[1, 2, 1], [1, 3, 1], [1, 4, 1], [1, 6, 2], [2, 8, 1], [3, 17, 1], [4, 18, 1], [5, 9, 2], [7, 10, 1], [7, 15, 1], [7, 16, 1], [8, 9, 1], [8, 11, 1], [8, 12, 1], [9, 10, 1], [10, 13, 1], [10, 14, 1]]}"#;
-    let g = Graph::new(j);
+    let g = Graph::from_old_json(j);
     println!("{:?}", g);
 }
 

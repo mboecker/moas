@@ -1,8 +1,8 @@
 use crate::subgraphs::Subgraphs;
 use crate::Graph;
 use std::collections::HashSet;
-use std::hash::Hash;
 use std::fmt::Debug;
+use std::hash::Hash;
 
 mod state;
 use self::state::State;

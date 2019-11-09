@@ -5,9 +5,9 @@ use std::cell::RefCell;
 use std::collections::BTreeMap;
 // use std::collections::BTreeSet;
 use std::collections::HashSet;
+use std::fmt::Debug;
 use std::hash::Hash;
 use std::rc::Rc;
-use std::fmt::Debug;
 
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
@@ -195,7 +195,7 @@ where
                     .neighbors(*i)
                     .map(|j| state.g.bonds().get(*i, j))
                     .sum::<u8>()
-                    < crate::get_bonds_for_element(**a)
+                    < crate::Atoms::max_bonds(**a as u16)
             })
             .map(|(i, _)| i)
             .next();
@@ -232,13 +232,16 @@ where
 
                             let mapping: BTreeMap<_, _> = attachment.into();
 
-
                             // check if the attached_node already contained a similar new_node.
                             // this means checking if the combination of atom label and number of bonds is already present in the bitset.
                             let node_attachment_information: Option<_> =
                                 if let Some(attached_node) = attached_node {
                                     // Only the anchor can gain neighbors.
-                                    if attached_node.iter().map(|sgi| mapping[sgi]).all(|gi| anchor != gi) {
+                                    if attached_node
+                                        .iter()
+                                        .map(|sgi| mapping[sgi])
+                                        .all(|gi| anchor != gi)
+                                    {
                                         return None;
                                     }
 
@@ -255,7 +258,7 @@ where
                                             .neighbors(gi)
                                             .map(|j| state.g.bonds().get(gi, j))
                                             .sum::<u8>()
-                                            >= crate::get_bonds_for_element(state.g.atoms()[gi])
+                                            >= crate::Atoms::max_bonds(state.g.atoms()[gi] as u16)
                                         {
                                             // println!("this would violate bonding rules, so we skip him.");
                                             return None;
@@ -281,7 +284,7 @@ where
                             // Rule out graphs with too many atom bonds.
                             for i in 0..g.size() {
                                 let s: u8 = (0..g.size()).map(|j| g.bonds().get(i, j)).sum();
-                                if s > crate::get_bonds_for_element(g.atoms()[i]) {
+                                if s > crate::Atoms::max_bonds(g.atoms()[i] as u16) {
                                     // println!("this would violate bonding rules.");
                                     return None;
                                 }
@@ -293,7 +296,6 @@ where
                             // Check, if by attaching this subgraph in this way,
                             // we used more subgraphs than we're allowed to.
                             if used_subgraphs.is_subset_of(&self.subgraphs) {
-
                                 // mark this attachment option
                                 if let Some((gi, label, n_bonds)) = node_attachment_information {
                                     attached_nodes.borrow_mut()[gi].set_flag(label, n_bonds);

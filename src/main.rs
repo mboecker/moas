@@ -12,6 +12,7 @@ use clap::{App, Arg};
 use rusqlite::{Connection, NO_PARAMS};
 
 mod assembly;
+mod atoms;
 mod attachment;
 mod extra;
 mod graph;
@@ -21,21 +22,10 @@ mod statistics;
 mod subgraphs;
 
 pub use assembly::assemble;
+pub use atoms::Atoms;
 use attachment::attach;
 pub use graph::Graph;
 pub use isomorphism::are_isomorphic;
-
-/// Returns the maximum number of bonds an element has.
-/// Data for most element is still missing, sadly.
-/// Atoms will be filled with bonded atoms until they are full.
-/// This will cause assembly to fail, if this value is inaccurate.
-pub(crate) fn get_bonds_for_element(a: usize) -> u8 {
-    if a == 1 {
-        1
-    } else {
-        (8 - (a - 2) % 8) as u8
-    }
-}
 
 fn main() {
     #[derive(Debug)]
@@ -118,7 +108,7 @@ fn main() {
         for x in iter {
             use crate::subgraphs::Subgraphs;
 
-            let g = graph::Graph::new(x.structure);
+            let g = graph::Graph::from_json(x.structure);
 
             if crate::statistics::trace_enabled() {
                 use std::io::Write;
@@ -177,7 +167,7 @@ fn main() {
 
                 print!("{cid}", cid = x.cid);
 
-                let g = graph::Graph::new(x.structure);
+                let g = graph::Graph::from_json(x.structure);
 
                 // determine the graphs' subgraphs.
                 let sg = subgraphs::variants::SubgraphsAndRings::new(&g);
@@ -244,7 +234,7 @@ fn main() {
 
                 print!("{cid}", cid = x.cid);
 
-                let g = graph::Graph::new(x.structure);
+                let g = graph::Graph::from_json(x.structure);
 
                 // determine the graphs' subgraphs.
                 let sg = subgraphs::variants::Subgraphs5AndRings::new(&g);
