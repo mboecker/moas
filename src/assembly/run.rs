@@ -7,6 +7,7 @@ use std::collections::BTreeMap;
 use std::collections::HashSet;
 use std::hash::Hash;
 use std::rc::Rc;
+use std::fmt::Debug;
 
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
@@ -26,13 +27,16 @@ where
 
     /// The current iteration number.
     current_iter: usize,
+
+    /// Optionally, give a size the current queue can't pass.
+    max_queue_size: Option<usize>,
 }
 
 impl<S> Run<S>
 where
-    S: Subgraphs + Eq + Hash + Send + Sync,
+    S: Subgraphs + Eq + Hash + Send + Sync + Debug,
 {
-    pub fn new(subgraphs: S) -> Run<S> {
+    pub fn new(subgraphs: S, max_queue_size: Option<usize>) -> Run<S> {
         // Generate inital state.
         let g = subgraphs.select_starting_graph();
         let sg = S::new(&g);
@@ -47,28 +51,30 @@ where
             q_active,
             q_passive,
             current_iter: 0,
+            max_queue_size,
         }
     }
 
-    // #[cfg(test)]
-    // pub fn with_starting_graph(subgraphs: S, g: Graph) -> Run<S> {
-    //     // Generate inital state.
-    //     let sg = S::new(&g);
-    //     let state = State::new(g, sg);
+    #[cfg(test)]
+    pub fn with_starting_graph(subgraphs: S, g: Graph) -> Run<S> {
+        // Generate inital state.
+        let sg = S::new(&g);
+        let state = State::new(g, sg);
 
-    //     let q_passive = HashSet::new();
-    //     let mut q_active = HashSet::new();
-    //     q_active.insert(state);
+        let q_passive = HashSet::new();
+        let mut q_active = HashSet::new();
+        q_active.insert(state);
 
-    //     Run {
-    //         subgraphs,
-    //         q_active,
-    //         q_passive,
-    //         current_iter: 0,
-    //     }
-    // }
+        Run {
+            subgraphs,
+            q_active,
+            q_passive,
+            current_iter: 0,
+            max_queue_size: None,
+        }
+    }
 
-    pub fn assemble(mut self) -> HashSet<Graph> {
+    pub fn assemble(mut self) -> Option<HashSet<Graph>> {
         for iter in 0.. {
             use chrono::Utc;
             if crate::statistics::trace_enabled() {
@@ -88,6 +94,12 @@ where
             }
 
             let new_queue = self.iterate();
+
+            if let Some(max_queue_size) = self.max_queue_size {
+                if new_queue.len() >= max_queue_size {
+                    return None;
+                }
+            }
 
             if crate::statistics::trace_enabled() {
                 let duration = std::time::Instant::now() - start;
@@ -119,20 +131,22 @@ where
         let subgraphs = self.subgraphs;
 
         #[cfg(feature = "parallel")]
-        return self
-            .q_passive
-            .into_par_iter()
-            .filter(|state| state.is_successful(&subgraphs))
-            .map(|state| state.g)
-            .collect();
+        return Some(
+            self.q_passive
+                .into_par_iter()
+                .filter(|state| state.is_successful(&subgraphs))
+                .map(|state| state.g)
+                .collect(),
+        );
 
         #[cfg(not(feature = "parallel"))]
-        return self
-            .q_passive
-            .into_iter()
-            .filter(|state| state.is_successful(&subgraphs))
-            .map(|state| state.g)
-            .collect();
+        return Some(
+            self.q_passive
+                .into_iter()
+                .filter(|state| state.is_successful(&subgraphs))
+                .map(|state| state.g)
+                .collect(),
+        );
     }
 
     fn iterate(&self) -> HashSet<State<S>> {
@@ -181,7 +195,7 @@ where
                     .neighbors(*i)
                     .map(|j| state.g.bonds().get(*i, j))
                     .sum::<u8>()
-                    < crate::get_min_bonds_for_element(**a)
+                    < crate::get_bonds_for_element(**a)
             })
             .map(|(i, _)| i)
             .next();
@@ -211,44 +225,52 @@ where
                         .filter_map(move |attachment| {
                             let new_node = attachment.new_node;
 
-                            // Find the node in sg that the new node is attached to.
-                            let attached_node: Option<usize> = attachment
+                            // Find the node(s) in sg that the new node is attached to.
+                            let attached_node: Option<Vec<usize>> = attachment
                                 .new_node
-                                .map(|new_node| sg.neighbors(new_node).next().unwrap());
+                                .map(|new_node| sg.neighbors(new_node).collect());
 
                             let mapping: BTreeMap<_, _> = attachment.into();
+
 
                             // check if the attached_node already contained a similar new_node.
                             // this means checking if the combination of atom label and number of bonds is already present in the bitset.
                             let node_attachment_information: Option<_> =
-                                if let Some(sgi) = attached_node {
-                                    let gi = mapping[&sgi];
-                                    let new_node = new_node.unwrap();
-                                    let n_bonds = *sg.bonds().get(sgi, new_node);
-                                    let label = sg.atoms()[new_node] as u8;
-
+                                if let Some(attached_node) = attached_node {
                                     // Only the anchor can gain neighbors.
-                                    if gi != anchor {
+                                    if attached_node.iter().map(|sgi| mapping[sgi]).all(|gi| anchor != gi) {
                                         return None;
                                     }
 
-                                    // If this atom cannot have another neighbor, skip this.
-                                    if state
-                                        .g
-                                        .neighbors(gi)
-                                        .map(|j| state.g.bonds().get(gi, j))
-                                        .sum::<u8>()
-                                        >= crate::get_max_bonds_for_element(state.g.atoms()[gi])
-                                    {
-                                        return None;
-                                    }
+                                    if attached_node.len() == 1 {
+                                        let sgi = attached_node.into_iter().next().unwrap();
+                                        let gi = mapping[&sgi];
+                                        let new_node = new_node.unwrap();
+                                        let n_bonds = *sg.bonds().get(sgi, new_node);
+                                        let label = sg.atoms()[new_node] as u8;
 
-                                    // If this has already been tried (see below), skip this attachment.
-                                    if attached_nodes.borrow()[gi].is_set(label, n_bonds) {
-                                        return None;
-                                    }
+                                        // If this atom cannot have another neighbor, skip this.
+                                        if state
+                                            .g
+                                            .neighbors(gi)
+                                            .map(|j| state.g.bonds().get(gi, j))
+                                            .sum::<u8>()
+                                            >= crate::get_bonds_for_element(state.g.atoms()[gi])
+                                        {
+                                            // println!("this would violate bonding rules, so we skip him.");
+                                            return None;
+                                        }
 
-                                    Some((gi, label, n_bonds))
+                                        // If this has already been tried (see below), skip this attachment.
+                                        if attached_nodes.borrow()[gi].is_set(label, n_bonds) {
+                                            // println!("already had a {} attached this iteration.", label);
+                                            return None;
+                                        }
+
+                                        Some((gi, label, n_bonds))
+                                    } else {
+                                        None
+                                    }
                                 } else {
                                     None
                                 };
@@ -259,7 +281,8 @@ where
                             // Rule out graphs with too many atom bonds.
                             for i in 0..g.size() {
                                 let s: u8 = (0..g.size()).map(|j| g.bonds().get(i, j)).sum();
-                                if s > crate::get_max_bonds_for_element(g.atoms()[i]) {
+                                if s > crate::get_bonds_for_element(g.atoms()[i]) {
+                                    // println!("this would violate bonding rules.");
                                     return None;
                                 }
                             }
@@ -270,13 +293,26 @@ where
                             // Check, if by attaching this subgraph in this way,
                             // we used more subgraphs than we're allowed to.
                             if used_subgraphs.is_subset_of(&self.subgraphs) {
+
                                 // mark this attachment option
                                 if let Some((gi, label, n_bonds)) = node_attachment_information {
                                     attached_nodes.borrow_mut()[gi].set_flag(label, n_bonds);
                                 }
-
+                                // println!("whooo");
                                 Some(State::new(g, used_subgraphs))
                             } else {
+                                // use std::hash::Hasher;
+                                // use std::io::Write;
+                                // let mut hasher = std::collections::hash_map::DefaultHasher::default();
+                                // sg.hash(&mut hasher);
+                                // let filename = format!("trace/invalid_sgs_{}.dot", hasher.finish());
+                                // let mut f = std::fs::File::create(filename).unwrap();
+                                // writeln!(&mut f, "graph invalid {{").unwrap();
+                                // sg.dump(&mut f, 0, false).unwrap();
+                                // g.dump(&mut f, sg.size(), true).unwrap();
+                                // writeln!(&mut f, "}}").unwrap();
+
+                                // println!("the subgraphs just dont add up.");
                                 None
                             }
                         }),

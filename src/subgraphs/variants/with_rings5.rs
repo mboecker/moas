@@ -5,16 +5,15 @@ use std::hash::Hash;
 use std::hash::Hasher;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct SubgraphsAndRings {
+pub struct Subgraphs5AndRings {
     atoms: HashMap<Graph, usize>,
     subgraphs: HashMap<Graph, usize>,
-    rings5: HashMap<Graph, usize>,
     rings6: HashMap<Graph, usize>,
 }
 
-impl subgraphs::Subgraphs for SubgraphsAndRings {
+impl subgraphs::Subgraphs for Subgraphs5AndRings {
     fn new(g: &Graph) -> Self {
-        assert!(g.size() >= 4);
+        assert!(g.size() >= 5);
         let atoms = g
             .label_counts()
             .into_iter()
@@ -25,32 +24,23 @@ impl subgraphs::Subgraphs for SubgraphsAndRings {
             })
             .collect();
 
-        let subgraphs = subgraphs::get_all(g, 4);
-
-        let rings5 = if g.size() >= 5 {
-            subgraphs::combine(g, &subgraphs, 5)
-        } else {
-            Vec::new()
-        };
+        let subgraphs = subgraphs::get_all(g, 5);
 
         let rings6 = if g.size() >= 6 {
-            subgraphs::combine(g, &rings5, 6)
+            subgraphs::combine(g, &subgraphs, 6)
         } else {
             Vec::new()
         };
 
-        let subgraphs = subgraphs::count_subgraphs(g, &subgraphs, 4);
-        let mut rings5 = subgraphs::count_subgraphs(g, &rings5, 5);
+        let subgraphs = subgraphs::count_subgraphs(g, &subgraphs, 5);
         let mut rings6 = subgraphs::count_subgraphs(g, &rings6, 6);
 
         // Retain only rings in the rings5 and rings6 sets.
-        rings5.retain(|k, _| k.is_circular());
         rings6.retain(|k, _| k.is_circular());
 
-        SubgraphsAndRings {
+        Subgraphs5AndRings {
             atoms,
             subgraphs,
-            rings5,
             rings6,
         }
     }
@@ -76,22 +66,8 @@ impl subgraphs::Subgraphs for SubgraphsAndRings {
             }
         }
 
-        for (k, v) in self.rings5.iter() {
-            if other.rings5.get(k).unwrap_or(&0) < v {
-                return false;
-            }
-        }
-
         for (k, v) in self.subgraphs.iter() {
             if other.subgraphs.get(k).unwrap_or(&0) < v {
-                // use std::io::Write;
-                // let mut hasher = std::collections::hash_map::DefaultHasher::default();
-                // k.hash(&mut hasher);
-                // let filename = format!("trace/wrong_sg_{}.dot", hasher.finish());
-                // let mut f = std::fs::File::create(filename).unwrap();
-                // writeln!(&mut f, "graph invalid {{").unwrap();
-                // k.dump(&mut f, 0, true).unwrap();
-                // writeln!(&mut f, "}}").unwrap();
                 return false;
             }
         }
@@ -103,7 +79,6 @@ impl subgraphs::Subgraphs for SubgraphsAndRings {
         Box::new(
             self.rings6
                 .keys()
-                .chain(self.rings5.keys())
                 .chain(self.subgraphs.keys())
                 .chain(self.atoms.keys()),
         )
@@ -115,9 +90,8 @@ impl subgraphs::Subgraphs for SubgraphsAndRings {
 
     fn score(&self) -> usize {
         let has_ring6 = (self.rings6.len() > 0) as usize;
-        let has_ring5 = (self.rings5.len() > 0) as usize;
         let has_subgraph = (self.subgraphs.len() > 0) as usize;
-        has_ring6 * 3 + has_ring5 * 2 + has_subgraph
+        has_ring6 * 2 + has_subgraph
     }
 
     fn amount_of(&self, g: &Graph) -> usize {
@@ -125,7 +99,7 @@ impl subgraphs::Subgraphs for SubgraphsAndRings {
     }
 }
 
-impl Hash for SubgraphsAndRings {
+impl Hash for Subgraphs5AndRings {
     fn hash<H>(&self, h: &mut H)
     where
         H: Hasher,

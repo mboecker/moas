@@ -29,27 +29,11 @@ pub use isomorphism::are_isomorphic;
 /// Data for most element is still missing, sadly.
 /// Atoms will be filled with bonded atoms until they are full.
 /// This will cause assembly to fail, if this value is inaccurate.
-pub(crate) fn get_max_bonds_for_element(a: usize) -> u8 {
-    match a {
-        1 => 1,  // hydrogen
-        6 => 4,  // carbon
-        7 => 4,  // nitrogen
-        8 => 2,  // oxygen
-        15 => 5, // phosphorus
-        16 => 6, // sulphur
-        _ => 4,
-    }
-}
-
-pub(crate) fn get_min_bonds_for_element(a: usize) -> u8 {
-    match a {
-        1 => 1,  // hydrogen
-        6 => 4,  // carbon
-        7 => 3,  // nitrogen
-        8 => 2,  // oxygen
-        15 => 5, // phosphorus
-        16 => 2, // sulphur
-        _ => 4,
+pub(crate) fn get_bonds_for_element(a: usize) -> u8 {
+    if a == 1 {
+        1
+    } else {
+        (8 - (a - 2) % 8) as u8
     }
 }
 
@@ -100,12 +84,20 @@ fn main() {
                 .help("A file to read CIDs from.")
                 .takes_value(true),
         )
+        .arg(
+            Arg::with_name("queue_max")
+                .short("q")
+                .help("The maximum of partially assembled graphs in a current queue.")
+                .takes_value(true),
+        )
         .get_matches();
 
     let sqlite_name = matches
         .value_of("database file name")
         .unwrap_or("sqlite/pubchem.db");
     let conn = Connection::open(sqlite_name).unwrap();
+
+    let max_queue_size = matches.value_of("queue_max").map(|x| x.parse().unwrap());
 
     if let Some(cid) = matches.value_of("compound id") {
         let sql = format!("SELECT cid, structure, is_contiguous, n_atoms, n_edges FROM compounds WHERE cid = {} LIMIT 1", cid);
@@ -147,15 +139,19 @@ fn main() {
             }
 
             // re-assemble the graph
-            let gs = assemble(sg);
-
-            assert!(gs.contains(&g));
+            let gs = assemble(sg, max_queue_size).expect("overshot max queue size");
 
             if crate::statistics::trace_enabled() {
                 let filename = "trace/result.dot";
                 let f = std::fs::File::create(filename).unwrap();
                 crate::prelude::dump_set(f, gs.iter()).unwrap();
             }
+
+            println!(
+                "Reconstruction of compound {cid} resulted in {len} molecules.",
+                cid = x.cid,
+                len = gs.len()
+            );
         }
     }
 
@@ -188,18 +184,24 @@ fn main() {
 
                 // re-assemble the graph
                 let start = std::time::Instant::now();
-                let gs = assemble(sg);
+                let gs = assemble(sg, max_queue_size);
                 let dur = std::time::Instant::now() - start;
-
-                // cid, duplicates, secs
-                println!(", {dup}, {dur}", dup = gs.len(), dur = dur.as_secs_f64());
 
                 // assert!(gs.contains(&g), "The assembly of cid {} failed.", x.cid);
 
-                if crate::statistics::trace_enabled() {
-                    let filename = format!("trace/results_{}.dot", x.cid);
-                    let f = std::fs::File::create(filename).unwrap();
-                    crate::prelude::dump_set(f, gs.iter()).unwrap();
+                if let Some(gs) = gs {
+                    // cid, duplicates, secs
+                    println!(", {dup}, {dur}", dup = gs.len(), dur = dur.as_secs_f64());
+
+                    // assert!(gs.contains(&g), "The assembly of cid {} failed.", x.cid);
+
+                    if crate::statistics::trace_enabled() {
+                        let filename = format!("trace/results_{}.dot", x.cid);
+                        let f = std::fs::File::create(filename).unwrap();
+                        crate::prelude::dump_set(f, gs.iter()).unwrap();
+                    }
+                } else {
+                    println!(", NA, NA");
                 }
             }
         }
@@ -236,27 +238,35 @@ fn main() {
             for x in iter {
                 use crate::subgraphs::Subgraphs;
 
+                if x.atoms < 5 {
+                    continue;
+                }
+
                 print!("{cid}", cid = x.cid);
 
                 let g = graph::Graph::new(x.structure);
 
                 // determine the graphs' subgraphs.
-                let sg = subgraphs::variants::SubgraphsAndRings::new(&g);
+                let sg = subgraphs::variants::Subgraphs5AndRings::new(&g);
 
                 // re-assemble the graph
                 let start = std::time::Instant::now();
-                let gs = assemble(sg);
+                let gs = assemble(sg, max_queue_size);
                 let dur = std::time::Instant::now() - start;
 
-                // cid, duplicates, secs
-                println!(", {dup}, {dur}", dup = gs.len(), dur = dur.as_secs_f64());
+                if let Some(gs) = gs {
+                    // cid, duplicates, secs
+                    println!(", {dup}, {dur}", dup = gs.len(), dur = dur.as_secs_f64());
 
-                // assert!(gs.contains(&g), "The assembly of cid {} failed.", x.cid);
+                    // assert!(gs.contains(&g), "The assembly of cid {} failed.", x.cid);
 
-                if crate::statistics::trace_enabled() {
-                    let filename = format!("trace/results_{}.dot", x.cid);
-                    let f = std::fs::File::create(filename).unwrap();
-                    crate::prelude::dump_set(f, gs.iter()).unwrap();
+                    if crate::statistics::trace_enabled() {
+                        let filename = format!("trace/results_{}.dot", x.cid);
+                        let f = std::fs::File::create(filename).unwrap();
+                        crate::prelude::dump_set(f, gs.iter()).unwrap();
+                    }
+                } else {
+                    println!(", NA, NA");
                 }
             }
         }

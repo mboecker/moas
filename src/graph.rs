@@ -245,7 +245,7 @@ impl Graph {
             .filter(|&i| {
                 let e = self.atoms[i];
                 let n: u8 = self.neighbors(i).map(|j| self.bonds.get(i, j)).sum();
-                n < crate::get_max_bonds_for_element(e)
+                n < crate::get_bonds_for_element(e)
             })
             .next()
     }
@@ -255,33 +255,46 @@ impl Hash for Graph {
     /// This function must result in the same hash for equal (isomorph) graphs.
     fn hash<H: Hasher>(&self, state: &mut H) {
         // For each combination of node labels, count the edges between these.
-        let mut edge_counts: BTreeMap<(usize, usize), usize> = BTreeMap::new();
+        let mut edge_counts: BTreeMap<(usize, usize, u8), usize> = BTreeMap::new();
 
         // Hash the node labels and their occurance count in sorted order,
         // so that their ordering is consistent in different graphs.
         let mut label_counts = BTreeMap::new();
+
+        // Count, how many edges each node has.
+        // let mut degree_counts: BTreeMap<[usize; 3], usize> = BTreeMap::new();
 
         for i in 0..self.size() {
             // Increase label count of current node.
             let element1 = self.atoms()[i];
             *label_counts.entry(element1).or_insert(0) += 1;
 
-            for j in 0..i {
-                let element2 = self.atoms()[j];
+            // let mut triple = [0,0,0];
 
-                // normalize element tuple
-                let tuple = if element1 > element2 {
-                    (element2, element1)
-                } else {
-                    (element1, element2)
-                };
-                *edge_counts.entry(tuple).or_default() += 1;
+            for j in 0..i {
+                let v = *self.bonds().get(i,j);
+
+                if v > 0 {
+                    // Count a v-degree bond between these two elements.
+                    // triple[*self.bonds().get(i,j) as usize - 1] += 1;
+
+                    // normalize element tuple
+                    let element2 = self.atoms()[j];
+                    let tuple = if element1 > element2 {
+                        (element2, element1, v)
+                    } else {
+                        (element1, element2, v)
+                    };
+                    *edge_counts.entry(tuple).or_default() += 1;
+                }
             }
+            // *degree_counts.entry(triple).or_default() += 1;
         }
 
         // Hash some values that are equal on isomorphic graphs.
         label_counts.hash(state);
         edge_counts.hash(state);
+        // degree_counts.hash(state);
     }
 }
 
