@@ -196,7 +196,7 @@ impl Graph {
     ) -> std::io::Result<()> {
         for (i, j) in self.atoms.iter().enumerate() {
             if use_element_names {
-                let label = crate::Atoms::label(*j as u16);
+                let label = crate::Atoms::label(*j);
                 writeln!(f, r#"  {} [shape=circle, label="{}"];"#, i + offset, label)?;
             } else {
                 writeln!(f, r#"  {} [shape=circle, label="{}"];"#, i + offset, j)?;
@@ -276,7 +276,7 @@ impl Graph {
             .filter(|&i| {
                 let e = self.atoms[i];
                 let n: u8 = self.neighbors(i).map(|j| self.bonds.get(i, j)).sum();
-                n < crate::Atoms::max_bonds(e as u16)
+                n < crate::Atoms::max_bonds(e)
             })
             .next()
     }

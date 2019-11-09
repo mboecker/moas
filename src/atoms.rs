@@ -33,7 +33,7 @@ fn get_bonds_for_element(a: usize) -> u8 {
 pub struct Atoms;
 
 impl Atoms {
-    fn decode(encoding: u16) -> (u8, i8) {
+    fn decode(encoding: usize) -> (u8, i8) {
         let element = (encoding & 0xFF) as u8;
         let charge = ((encoding >> 8) & 0xFF) as i8;
         (element, charge)
@@ -45,13 +45,13 @@ impl Atoms {
     }
 
     /// Determines the amount of bonds an element can form.
-    pub fn max_bonds(encoding: u16) -> u8 {
+    pub fn max_bonds(encoding: usize) -> u8 {
         let (element, _charge) = Self::decode(encoding);
         get_bonds_for_element(element as usize)
     }
 
     /// Outputs a label given the atom labeling.
-    pub fn label(encoding: u16) -> String {
+    pub fn label(encoding: usize) -> String {
         let (element, charge) = Self::decode(encoding);
         format!(
             "{}{}",

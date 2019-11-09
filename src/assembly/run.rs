@@ -195,7 +195,7 @@ where
                     .neighbors(*i)
                     .map(|j| state.g.bonds().get(*i, j))
                     .sum::<u8>()
-                    < crate::Atoms::max_bonds(**a as u16)
+                    < crate::Atoms::max_bonds(**a)
             })
             .map(|(i, _)| i)
             .next();
@@ -258,7 +258,7 @@ where
                                             .neighbors(gi)
                                             .map(|j| state.g.bonds().get(gi, j))
                                             .sum::<u8>()
-                                            >= crate::Atoms::max_bonds(state.g.atoms()[gi] as u16)
+                                            >= crate::Atoms::max_bonds(state.g.atoms()[gi])
                                         {
                                             // println!("this would violate bonding rules, so we skip him.");
                                             return None;
@@ -284,7 +284,7 @@ where
                             // Rule out graphs with too many atom bonds.
                             for i in 0..g.size() {
                                 let s: u8 = (0..g.size()).map(|j| g.bonds().get(i, j)).sum();
-                                if s > crate::Atoms::max_bonds(g.atoms()[i] as u16) {
+                                if s > crate::Atoms::max_bonds(g.atoms()[i]) {
                                     // println!("this would violate bonding rules.");
                                     return None;
                                 }
