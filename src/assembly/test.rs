@@ -41,14 +41,6 @@ fn test_assembly(structure: &str) -> HashSet<Graph> {
     test_rings(structure)
 }
 
-// #[test]
-// #[ignore]
-// fn dioxaziridine() {
-//     let j = r#"{"atoms": [[1, 8], [2,8], [3,6], [4,1]],
-//                 "bonds": [[1,2,1], [2,3,1], [1,3,1], [3,4,1]] }"#;
-//     test_assembly(j);
-// }
-
 #[test]
 fn benzol() {
     let j = r#"{"atoms": [[1, 6, 0], [2, 6, 0], [3, 6, 0], [4, 6, 0], [5, 6, 0], [6, 6, 0], [7, 1, 0], [8, 1, 0], [9, 1, 0], [10, 1, 0], [11, 1, 0], [12, 1, 0]],
@@ -120,6 +112,15 @@ fn cid_13643966() {
 fn cid_5462805() {
     let j = r#"{"atoms": [[1, 16, 0], [2, 16, 0], [3, 15, 0], [4, 15, 0], [5, 15, 0], [6, 15, 0]],
                 "bonds": [[1, 4, 1], [1, 6, 1], [2, 5, 1], [2, 6, 1], [3, 4, 1], [3, 5, 1], [3, 6, 1], [4, 5, 1]]}"#;
+    let gs = test_assembly(j);
+    assert_eq!(gs.len(), 1);
+}
+
+#[test]
+fn cid_223() {
+    // this is an ionized molecule.
+    let j = r#"{"atoms": [[1, 7, 1], [2, 1, 0], [3, 1, 0], [4, 1, 0], [5, 1, 0]],
+                "bonds": [[1, 2, 1], [1, 3, 1], [1, 4, 1], [1, 5, 1]]}"#;
     let gs = test_assembly(j);
     assert_eq!(gs.len(), 1);
 }

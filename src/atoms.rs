@@ -37,8 +37,8 @@ impl Atoms {
 
     /// Determines the amount of bonds an element can form.
     pub fn max_bonds(encoding: usize) -> u8 {
-        let (element, _charge) = Self::decode(encoding);
-        get_bonds_for_element(element as usize)
+        let (element, charge) = Self::decode(encoding);
+        (get_bonds_for_element(element as usize) as isize + charge as isize) as u8
     }
 
     /// Outputs a label given the atom labeling.
