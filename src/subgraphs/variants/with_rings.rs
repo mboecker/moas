@@ -12,34 +12,64 @@ pub struct SubgraphsAndRings {
     rings6: HashMap<Graph, usize>,
 }
 
-// impl SubgraphsAndRings {
-//     fn check_for_partials(&self, other: &Self) -> bool {
-//         let mut missing: HashMap<&Graph, usize> = HashMap::new();
-//         let mut available: HashMap<&Graph, usize> = HashMap::new();
+impl SubgraphsAndRings {
+    fn check_for_partials(&self, other: &Self) -> bool {
+        let mut missing: HashMap<&Graph, usize> = HashMap::new();
+        let mut available: HashMap<&Graph, usize> = HashMap::new();
 
-//         for (sg, v) in self.subgraphs.iter() {
-//             let m = *other.subgraphs.get(sg).unwrap_or(&0) as isize - *v as isize;
-//             if m < 0 {
-//                 missing.insert(sg, (-m) as usize);
-//             }
-//         }
+        // Scan for subgraphs that are still missing.
+        for (sg, v) in self.subgraphs.iter() {
+            let m = *other.subgraphs.get(sg).unwrap_or(&0) as isize - *v as isize;
+            if m < 0 {
+                missing.insert(sg, (-m) as usize);
+            }
+        }
 
-//         for (sg, v) in other.subgraphs.iter() {
-//             let m = *self.subgraphs.get(sg).unwrap_or(&0) as isize - *v as isize;
-//             if m < 0 {
-//                 available.insert(sg, (-m) as usize);
-//             }
-//         }
+        // Scan for subgraphs that are still available.
+        for (sg, v) in other.subgraphs.iter() {
+            let m = *self.subgraphs.get(sg).unwrap_or(&0) as isize - *v as isize;
+            if m < 0 {
+                available.insert(sg, (-m) as usize);
+            }
+        }
 
-//         for (sg, v) in missing {
-//             for _ in 0..v {
+        for (sg, v) in missing {
+            for _ in 0..v {
+                let mut used_sg = None;
+                for (avail_sg, v2) in &available {
+                    if v2 > &0 {
+                        use itertools::Itertools;
+                        // Try removing edges from avail_sg and look if its isomorphic to sg.
+                        for (i, j) in (0..avail_sg.size())
+                            .tuple_combinations::<(_, _)>()
+                            .filter(|(i, j)| i < j && avail_sg.bonds().get(*i, *j) > &0)
+                        {
+                            let mut tmp_graph: Graph = (*avail_sg).clone();
+                            let v: u8 = *tmp_graph.bonds().get(i, j);
+                            *tmp_graph.bonds_mut().get_mut(i, j) = 0;
+                            *tmp_graph.bonds_mut().get_mut(j, i) = 0;
 
-//             }
-//         }
+                            if &tmp_graph == sg {
+                                *tmp_graph.bonds_mut().get_mut(i, j) = v;
+                                *tmp_graph.bonds_mut().get_mut(j, i) = v;
+                                used_sg = Some(tmp_graph);
+                                break;
+                            }
+                        }
+                    }
+                }
 
-//         true
-//     }
-// }
+                if let Some(used_sg) = used_sg {
+                    *available.get_mut(&used_sg).unwrap() -= 1;
+                } else {
+                    return false;
+                }
+            }
+        }
+
+        true
+    }
+}
 
 impl subgraphs::Subgraphs for SubgraphsAndRings {
     fn new(g: &Graph) -> Self {
@@ -68,13 +98,19 @@ impl subgraphs::Subgraphs for SubgraphsAndRings {
             Vec::new()
         };
 
-        let subgraphs = subgraphs::count_subgraphs(g, &subgraphs, 4);
+        let mut subgraphs = subgraphs::count_subgraphs(g, &subgraphs, 4);
         let mut rings5 = subgraphs::count_subgraphs(g, &rings5, 5);
         let mut rings6 = subgraphs::count_subgraphs(g, &rings6, 6);
 
         // Retain only rings in the rings5 and rings6 sets.
         rings5.retain(|k, _| k.is_circular());
         rings6.retain(|k, _| k.is_circular());
+
+        subgraphs.iter_mut().for_each(|(k, v)| {
+            if k.is_circular() {
+                *v *= 4;
+            }
+        });
 
         SubgraphsAndRings {
             atoms,
@@ -111,18 +147,19 @@ impl subgraphs::Subgraphs for SubgraphsAndRings {
             }
         }
 
-        for (k, v) in self.subgraphs.iter() {
-            if other.subgraphs.get(k).unwrap_or(&0) < v {
-                return false;
-            }
-        }
+        // for (k, v) in self.subgraphs.iter() {
+        //     if other.subgraphs.get(k).unwrap_or(&0) < v {
+        //         return false;
+        //     }
+        // }
 
-        true
+        self.check_for_partials(other)
     }
 
     fn all_subgraphs<'a>(&'a self) -> Box<dyn 'a + Iterator<Item = &'a Graph>> {
         Box::new(
-            self.rings6.keys()
+            self.rings6
+                .keys()
                 .chain(self.rings5.keys())
                 .chain(self.subgraphs.keys())
                 .chain(self.atoms.keys()),
@@ -131,7 +168,8 @@ impl subgraphs::Subgraphs for SubgraphsAndRings {
 
     fn with_counts<'a>(&'a self) -> Box<dyn 'a + Iterator<Item = (&'a Graph, &'a usize)>> {
         Box::new(
-            self.rings6.iter()
+            self.rings6
+                .iter()
                 .chain(self.rings5.iter())
                 .chain(self.subgraphs.iter())
                 .chain(self.atoms.iter()),
