@@ -237,7 +237,7 @@ fn main() {
                 let g = graph::Graph::from_json(x.structure);
 
                 // determine the graphs' subgraphs.
-                let sg = subgraphs::variants::Subgraphs5AndRings::new(&g);
+                let sg = subgraphs::variants::SubgraphsAndRings::new(&g);
 
                 // re-assemble the graph
                 let start = std::time::Instant::now();

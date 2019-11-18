@@ -39,6 +39,10 @@ impl subgraphs::Subgraphs for Only4 {
         Box::new(self.subgraphs.keys())
     }
 
+    fn with_counts<'a>(&'a self) -> Box<dyn 'a + Iterator<Item = (&'a Graph, &'a usize)>> {
+        Box::new(self.subgraphs.iter())
+    }
+
     fn attachable_subgraphs<'a>(&'a self) -> Box<dyn 'a + Iterator<Item = &'a Graph>> {
         Box::new(self.subgraphs.keys())
     }

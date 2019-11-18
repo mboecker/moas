@@ -274,9 +274,8 @@ impl Graph {
     pub fn first_unfull_node_id(&self) -> Option<usize> {
         (0..self.size())
             .filter(|&i| {
-                let e = self.atoms[i];
                 let n: u8 = self.neighbors(i).map(|j| self.bonds.get(i, j)).sum();
-                n < crate::Atoms::max_bonds(e)
+                n < crate::Atoms::max_bonds(self.atoms[i])
             })
             .next()
     }

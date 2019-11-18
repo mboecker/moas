@@ -43,3 +43,19 @@ pub fn dump_set<'a>(
     writeln!(out, "}}")?;
     std::io::Result::Ok(())
 }
+
+// pub fn dump_map<'a>(
+//     mut out: impl Write,
+//     set: impl Iterator<Item = (&'a Graph, &'a usize)>,
+// ) -> std::io::Result<()> {
+//     let mut i = 0;
+//     writeln!(out, "graph set {{")?;
+//     for (g, v) in set {
+//         for _ in 0..*v {
+//             g.dump(&mut out, i, true)?;
+//             i += g.size();
+//         }
+//     }
+//     writeln!(out, "}}")?;
+//     std::io::Result::Ok(())
+// }

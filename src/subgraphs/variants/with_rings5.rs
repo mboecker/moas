@@ -84,6 +84,15 @@ impl subgraphs::Subgraphs for Subgraphs5AndRings {
         )
     }
 
+    fn with_counts<'a>(&'a self) -> Box<dyn 'a + Iterator<Item = (&'a Graph, &'a usize)>> {
+        Box::new(
+            self.rings6
+                .iter()
+                .chain(self.subgraphs.iter())
+                .chain(self.atoms.iter()),
+        )
+    }
+
     fn attachable_subgraphs<'a>(&'a self) -> Box<dyn 'a + Iterator<Item = &'a Graph>> {
         Box::new(self.subgraphs.keys())
     }

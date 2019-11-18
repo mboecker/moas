@@ -12,6 +12,35 @@ pub struct SubgraphsAndRings {
     rings6: HashMap<Graph, usize>,
 }
 
+// impl SubgraphsAndRings {
+//     fn check_for_partials(&self, other: &Self) -> bool {
+//         let mut missing: HashMap<&Graph, usize> = HashMap::new();
+//         let mut available: HashMap<&Graph, usize> = HashMap::new();
+
+//         for (sg, v) in self.subgraphs.iter() {
+//             let m = *other.subgraphs.get(sg).unwrap_or(&0) as isize - *v as isize;
+//             if m < 0 {
+//                 missing.insert(sg, (-m) as usize);
+//             }
+//         }
+
+//         for (sg, v) in other.subgraphs.iter() {
+//             let m = *self.subgraphs.get(sg).unwrap_or(&0) as isize - *v as isize;
+//             if m < 0 {
+//                 available.insert(sg, (-m) as usize);
+//             }
+//         }
+
+//         for (sg, v) in missing {
+//             for _ in 0..v {
+
+//             }
+//         }
+
+//         true
+//     }
+// }
+
 impl subgraphs::Subgraphs for SubgraphsAndRings {
     fn new(g: &Graph) -> Self {
         assert!(g.size() >= 4);
@@ -84,14 +113,6 @@ impl subgraphs::Subgraphs for SubgraphsAndRings {
 
         for (k, v) in self.subgraphs.iter() {
             if other.subgraphs.get(k).unwrap_or(&0) < v {
-                // use std::io::Write;
-                // let mut hasher = std::collections::hash_map::DefaultHasher::default();
-                // k.hash(&mut hasher);
-                // let filename = format!("trace/wrong_sg_{}.dot", hasher.finish());
-                // let mut f = std::fs::File::create(filename).unwrap();
-                // writeln!(&mut f, "graph invalid {{").unwrap();
-                // k.dump(&mut f, 0, true).unwrap();
-                // writeln!(&mut f, "}}").unwrap();
                 return false;
             }
         }
@@ -101,11 +122,19 @@ impl subgraphs::Subgraphs for SubgraphsAndRings {
 
     fn all_subgraphs<'a>(&'a self) -> Box<dyn 'a + Iterator<Item = &'a Graph>> {
         Box::new(
-            self.rings6
-                .keys()
+            self.rings6.keys()
                 .chain(self.rings5.keys())
                 .chain(self.subgraphs.keys())
                 .chain(self.atoms.keys()),
+        )
+    }
+
+    fn with_counts<'a>(&'a self) -> Box<dyn 'a + Iterator<Item = (&'a Graph, &'a usize)>> {
+        Box::new(
+            self.rings6.iter()
+                .chain(self.rings5.iter())
+                .chain(self.subgraphs.iter())
+                .chain(self.atoms.iter()),
         )
     }
 
