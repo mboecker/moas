@@ -85,7 +85,7 @@ fn inner(g: &Graph, sg: &Graph, queue: &mut Queue) {
                         // Try different matching nodes in the big graph g.
                         // This means that the new node in the newly added edge is mapped to `candidate` in g.
                         for candidate in free_g_nodes.iter().filter(|i| g.atoms()[**i] == label) {
-                            if sg.bonds().get(*i, j) != g.bonds().get(*mapped_i, *candidate) {
+                            if g.bonds().get(*mapped_i, *candidate) == &0 && sg.bonds().get(*i, j) != &0 {
                                 // Add a new mapping (j, candidate) to a child node.
                                 let mut mapping = node.clone();
                                 mapping.add(j, *candidate);
