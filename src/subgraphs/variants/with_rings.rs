@@ -14,56 +14,36 @@ pub struct SubgraphsAndRings {
 
 impl SubgraphsAndRings {
     fn check_for_partials(&self, other: &Self) -> bool {
-        let mut missing: HashMap<&Graph, usize> = HashMap::new();
+        let mut missing: HashMap<Graph, usize> = HashMap::new();
         let mut available: HashMap<&Graph, usize> = HashMap::new();
 
         // Scan for subgraphs that are still missing.
         for (sg, v) in self.subgraphs.iter() {
             let m = *other.subgraphs.get(sg).unwrap_or(&0) as isize - *v as isize;
             if m < 0 {
-                missing.insert(sg, (-m) as usize);
+                use itertools::Itertools;
+                let iter: Option<(usize, usize)> = (0..sg.size()).filter(|i| sg.neighbors(*i).count() == 1).collect_tuple();
+                if let Some((i, j)) = iter {
+                    let mut closed_sg = sg.clone();
+                    *closed_sg.bonds_mut().get_mut(i, j) = 1;
+                    *missing.entry(closed_sg).or_default() += -m as usize;
+                } else {
+                    return false;
+                }
             }
         }
 
         // Scan for subgraphs that are still available.
         for (sg, v) in other.subgraphs.iter() {
             let m = *self.subgraphs.get(sg).unwrap_or(&0) as isize - *v as isize;
-            if m < 0 {
+            if m < 0 && sg.is_circular() {
                 available.insert(sg, (-m) as usize);
             }
         }
 
         for (sg, v) in missing {
-            for _ in 0..v {
-                let mut used_sg = None;
-                for (avail_sg, v2) in &available {
-                    if v2 > &0 {
-                        use itertools::Itertools;
-                        // Try removing edges from avail_sg and look if its isomorphic to sg.
-                        for (i, j) in (0..avail_sg.size())
-                            .tuple_combinations::<(_, _)>()
-                            .filter(|(i, j)| i < j && avail_sg.bonds().get(*i, *j) > &0)
-                        {
-                            let mut tmp_graph: Graph = (*avail_sg).clone();
-                            let v: u8 = *tmp_graph.bonds().get(i, j);
-                            *tmp_graph.bonds_mut().get_mut(i, j) = 0;
-                            *tmp_graph.bonds_mut().get_mut(j, i) = 0;
-
-                            if &tmp_graph == sg {
-                                *tmp_graph.bonds_mut().get_mut(i, j) = v;
-                                *tmp_graph.bonds_mut().get_mut(j, i) = v;
-                                used_sg = Some(tmp_graph);
-                                break;
-                            }
-                        }
-                    }
-                }
-
-                if let Some(used_sg) = used_sg {
-                    *available.get_mut(&used_sg).unwrap() -= 1;
-                } else {
-                    return false;
-                }
+            if available.get(&sg).unwrap_or(&0) < &v {
+                return false;
             }
         }
 
