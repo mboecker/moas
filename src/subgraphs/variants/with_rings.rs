@@ -22,12 +22,20 @@ impl SubgraphsAndRings {
             let m = *other.subgraphs.get(sg).unwrap_or(&0) as isize - *v as isize;
             if m < 0 {
                 use itertools::Itertools;
+
+                // Check, if they contain exactly two atoms that have only one bond.
+                // This indicates that the missing subgraph is a chain.
                 let iter: Option<(usize, usize)> = (0..sg.size()).filter(|i| sg.neighbors(*i).count() == 1).collect_tuple();
+
                 if let Some((i, j)) = iter {
+
+                    // Close the chain to a cycle and check if there are any of those available.
                     let mut closed_sg = sg.clone();
                     *closed_sg.bonds_mut().get_mut(i, j) = 1;
+                    *closed_sg.bonds_mut().get_mut(j, i) = 1;
                     *missing.entry(closed_sg).or_default() += -m as usize;
                 } else {
+                    // We dont handle other missing graphs.
                     return false;
                 }
             }
