@@ -224,7 +224,7 @@ where
                         .into_iter()
                         .filter_map(move |attachment| {
                             let new_node = attachment.new_node;
-
+                            
                             // Find the node(s) in sg that the new node is attached to.
                             let attached_node: Option<Vec<usize>> = attachment
                                 .new_node
@@ -244,6 +244,10 @@ where
                                     {
                                         return None;
                                     }
+
+                                    // if sg.atoms()[new_node.unwrap()] == 1 {
+                                    //     return None;
+                                    // }
 
                                     if attached_node.len() == 1 {
                                         let sgi = attached_node.into_iter().next().unwrap();
