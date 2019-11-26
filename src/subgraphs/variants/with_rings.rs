@@ -111,7 +111,7 @@ impl subgraphs::Subgraphs for SubgraphsAndRings {
         rings6.retain(|k, _| k.is_circular());
 
         subgraphs.iter_mut().for_each(|(k, v)| {
-            if k.is_circular() {
+            if k.contains_big_circle() {
                 *v *= 4;
             }
         });

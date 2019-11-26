@@ -271,6 +271,13 @@ impl Graph {
         (0..self.size()).all(|i| self.neighbors(i).count() == 2)
     }
 
+    /// Determines if this graph is one big circle.
+    /// May contain extra edges.
+    pub fn contains_big_circle(&self) -> bool {
+        assert!(self.is_contiguous());
+        (0..self.size()).all(|i| self.neighbors(i).count() >= 2)
+    }
+
     /// Returns the node id of the first atom, that has free bonds.
     pub fn first_unfull_node_id(&self) -> Option<usize> {
         (0..self.size())
