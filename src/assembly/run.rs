@@ -122,8 +122,6 @@ where
             }
         }
 
-        println!("done");
-
         let subgraphs = self.subgraphs;
 
         #[cfg(feature = "parallel")]

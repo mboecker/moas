@@ -290,7 +290,7 @@ fn main() {
                         crate::prelude::dump_set(f, gs.iter()).unwrap();
                     }
                 } else {
-                    println!(", NA, NA");
+                    println!(", NA, {sg_dur}, {dur}", sg_dur = sg_dur.as_secs_f64(), dur = dur.as_secs_f64());
                 }
             }
         }
