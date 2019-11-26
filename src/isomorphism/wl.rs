@@ -18,12 +18,16 @@ pub fn relabel(g: &mut Graph) {
     // Contains an index of the names in sorted order.
     let mut name_ids: BTreeSet<Name> = BTreeSet::new();
 
+    let mut compressed_labels = BTreeSet::new();
+
     // relabel all the nodes
     for i in 0..g.size() {
         // The new name for a node is a list of its neighbors.
         // For that, we iterate through all of its adjacent nodes
         // and note the node label as well as the amount of edges between the node and its neighbor.
         let mut name: [(u8, usize); 4] = [(0, 0); 4];
+
+        compressed_labels.insert(g.atoms()[i]);
 
         for (idx, p) in g
             .neighbors(i as usize)
@@ -49,9 +53,15 @@ pub fn relabel(g: &mut Graph) {
         .map(|(name_id, name)| (name, name_id))
         .collect();
 
+    let label_ids: BTreeMap<usize, usize> = compressed_labels.into_iter()
+        .enumerate()
+        .map(|(new_label, label)| (label, new_label))
+        .collect();
+
     let chunk = name_ids.len() + 2;
     for (i, a) in g.atoms_mut().iter_mut().enumerate() {
-        let b = *a * chunk + name_ids[&names[i]];
+        let new_label = label_ids[a];
+        let b = new_label * chunk + name_ids[&names[i]];
         // println!("atom {}: {} + {} = {}", i, a, atoms2[i], b);
         *a = b;
     }
