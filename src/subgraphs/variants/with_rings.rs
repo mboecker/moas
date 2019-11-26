@@ -28,7 +28,7 @@ impl SubgraphsAndRings {
         // Scan for subgraphs that are still available.
         for (sg, v) in other.subgraphs.iter() {
             let m = *self.subgraphs.get(sg).unwrap_or(&0) as isize - *v as isize;
-            if m < 0 && sg.is_circular() {
+            if m < 0 {
                 available.insert(sg, (-m) as usize);
             }
         }
@@ -49,7 +49,7 @@ impl SubgraphsAndRings {
                             *tmp_graph.bonds_mut().get_mut(i, j) = 0;
                             *tmp_graph.bonds_mut().get_mut(j, i) = 0;
 
-                            if &tmp_graph == sg {
+                            if tmp_graph.is_contiguous() && &tmp_graph == sg {
                                 *tmp_graph.bonds_mut().get_mut(i, j) = v;
                                 *tmp_graph.bonds_mut().get_mut(j, i) = v;
                                 used_sg = Some(tmp_graph);
@@ -68,6 +68,10 @@ impl SubgraphsAndRings {
         }
 
         true
+    }
+
+    pub fn n_rings(&self) -> (usize, usize) {
+        (self.rings5.values().sum(), self.rings6.values().sum())
     }
 }
 
@@ -161,7 +165,22 @@ impl subgraphs::Subgraphs for SubgraphsAndRings {
             self.rings6
                 .keys()
                 .chain(self.rings5.keys())
-                .chain(self.subgraphs.keys())
+                .chain(self.subgraphs.keys().filter(|sg| {
+                    let count = sg.atoms().iter().filter(|&e| *e == 1).count();
+                    count == 0
+                }))
+                .chain(self.subgraphs.keys().filter(|sg| {
+                    let count = sg.atoms().iter().filter(|&e| *e == 1).count();
+                    count == 1
+                }))
+                .chain(self.subgraphs.keys().filter(|sg| {
+                    let count = sg.atoms().iter().filter(|&e| *e == 1).count();
+                    count == 2
+                }))
+                .chain(self.subgraphs.keys().filter(|sg| {
+                    let count = sg.atoms().iter().filter(|&e| *e == 1).count();
+                    count == 3
+                }))
                 .chain(self.atoms.keys()),
         )
     }
@@ -189,6 +208,10 @@ impl subgraphs::Subgraphs for SubgraphsAndRings {
 
     fn amount_of(&self, g: &Graph) -> usize {
         *self.subgraphs.get(g).unwrap_or(&0)
+    }
+
+    fn molecule_size(&self) -> usize {
+        self.atoms.values().sum()
     }
 }
 

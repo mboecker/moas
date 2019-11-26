@@ -80,6 +80,18 @@ fn main() {
                 .help("The maximum of partially assembled graphs in a current queue.")
                 .takes_value(true),
         )
+        .arg(
+            Arg::with_name("dot")
+                .long("dot")
+                .help("if you set this flag, only the JSON data of this molecule will be printed.")
+                .takes_value(false)
+        )
+        .arg(
+            Arg::with_name("cycles")
+                .long("cycles")
+                .help("if you set this flag a csv will be printed with the cid and the number of cycles")
+                .takes_value(false)
+        )
         .get_matches();
 
     let sqlite_name = matches
@@ -109,6 +121,13 @@ fn main() {
             use crate::subgraphs::Subgraphs;
 
             let g = graph::Graph::from_json(x.structure);
+
+            if matches.is_present("dot") {
+                println!("graph g {{");
+                g.dump(std::io::stdout(), 0, true).unwrap();
+                println!("}}");
+                return;
+            }
 
             if crate::statistics::trace_enabled() {
                 use std::io::Write;
@@ -237,7 +256,22 @@ fn main() {
                 let g = graph::Graph::from_json(x.structure);
 
                 // determine the graphs' subgraphs.
+                let start = std::time::Instant::now();
                 let sg = subgraphs::variants::SubgraphsAndRings::new(&g);
+                let sg_dur = std::time::Instant::now() - start;
+
+                if matches.is_present("cycles") {
+                    let (three, four) = g.cycles();
+                    let (five, six) = sg.n_rings();
+                    println!(
+                        ", {three}, {four}, {five}, {six}",
+                        three = three,
+                        four = four,
+                        five = five,
+                        six = six
+                    );
+                    continue;
+                }
 
                 // re-assemble the graph
                 let start = std::time::Instant::now();
@@ -246,7 +280,7 @@ fn main() {
 
                 if let Some(gs) = gs {
                     // cid, duplicates, secs
-                    println!(", {dup}, {dur}", dup = gs.len(), dur = dur.as_secs_f64());
+                    println!(", {dup}, {sg_dur}, {dur}", dup = gs.len(), sg_dur = sg_dur.as_secs_f64(), dur = dur.as_secs_f64());
 
                     // assert!(gs.contains(&g), "The assembly of cid {} failed.", x.cid);
 

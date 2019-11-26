@@ -106,6 +106,10 @@ impl subgraphs::Subgraphs for Subgraphs5AndRings {
     fn amount_of(&self, g: &Graph) -> usize {
         *self.subgraphs.get(g).unwrap_or(&0)
     }
+
+    fn molecule_size(&self) -> usize {
+        self.atoms.values().sum()
+    }
 }
 
 impl Hash for Subgraphs5AndRings {

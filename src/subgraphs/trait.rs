@@ -9,4 +9,5 @@ pub trait Subgraphs {
     fn attachable_subgraphs<'a>(&'a self) -> Box<dyn 'a + Iterator<Item = &'a Graph>>;
     fn score(&self) -> usize;
     fn amount_of(&self, g: &Graph) -> usize;
+    fn molecule_size(&self) -> usize;
 }

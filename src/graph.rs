@@ -267,6 +267,7 @@ impl Graph {
 
     /// Determines if this graph is one big circle.
     pub fn is_circular(&self) -> bool {
+        assert!(self.is_contiguous());
         (0..self.size()).all(|i| self.neighbors(i).count() == 2)
     }
 
@@ -278,6 +279,26 @@ impl Graph {
                 n < crate::Atoms::max_bonds(self.atoms[i])
             })
             .next()
+    }
+
+    /// Returns a tuple. This tuple contains the number of cycles of size 3 in the graph, as well as the cycles of size 4.
+    pub fn cycles(&self) -> (usize, usize) {
+        use crate::subgraphs;
+        let three = subgraphs::get_all(self, 3);
+        let four = if self.size() >= 4 {
+            subgraphs::combine(self, &three, 4)
+        } else {
+            vec![]
+        };
+        let three = subgraphs::count_subgraphs(self, &three, 3)
+            .into_iter()
+            .map(|(sg, v)| if sg.is_circular() { v } else { 0 })
+            .sum();
+        let four = subgraphs::count_subgraphs(self, &four, 4)
+            .into_iter()
+            .map(|(sg, v)| if sg.is_circular() { v } else { 0 })
+            .sum();
+        (three, four)
     }
 }
 

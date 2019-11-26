@@ -1,13 +1,10 @@
 use super::State;
 use crate::subgraphs::Subgraphs;
 use crate::Graph;
-use std::cell::RefCell;
 use std::collections::BTreeMap;
-// use std::collections::BTreeSet;
 use std::collections::HashSet;
 use std::fmt::Debug;
 use std::hash::Hash;
-use std::rc::Rc;
 
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
@@ -108,9 +105,6 @@ where
             }
 
             // move things from q_active to q_passive if theyre less or equal to the min.
-            // this minimum is the first free node in the current active queue.
-            // let min = self.q_active.iter().min().unwrap();
-
             self.q_passive.extend(self.q_active.drain());
 
             if new_queue.is_empty() {
@@ -127,6 +121,8 @@ where
                 break;
             }
         }
+
+        println!("done");
 
         let subgraphs = self.subgraphs;
 
@@ -178,12 +174,6 @@ where
 
     /// Explores one of the current states by trying to attach unused subgraphs.
     fn explore_state(&self, state: &State<S>) -> HashSet<State<S>> {
-        use super::BitSet;
-
-        // A data structure to keep track of already explored added-subgraphs in this state.
-        let attached_nodes: Vec<BitSet> = (0..state.g.size()).map(|_| BitSet::default()).collect();
-        let attached_nodes = Rc::new(RefCell::new(attached_nodes));
-
         let anchor = state
             .g
             .atoms()
@@ -209,14 +199,50 @@ where
         // Iterate over all the subgraphs that are still available.
         self.subgraphs
             .attachable_subgraphs()
-            .filter_map(|sg| {
+            .enumerate()
+            .filter_map(|(_idx, sg)| {
                 // Skip this subgraph if we cant legally use it again.
                 if state.used.amount_of(sg) >= self.subgraphs.amount_of(sg) {
                     return None;
                 }
 
-                // explicitly capture this
-                let attached_nodes = attached_nodes.clone();
+                let is_chain = (0..sg.size())
+                    .filter(|i| sg.neighbors(*i).count() == 1)
+                    .count()
+                    == 2
+                    && (0..sg.size())
+                        .filter(|i| sg.neighbors(*i).count() == 2)
+                        .count()
+                        == 2;
+
+                let is_small_circle = (0..sg.size())
+                    .filter(|i| sg.neighbors(*i).count() == 1)
+                    .count()
+                    == 1
+                    && (0..sg.size())
+                        .filter(|i| sg.neighbors(*i).count() == 2)
+                        .count()
+                        == 2
+                    && (0..sg.size())
+                        .filter(|i| sg.neighbors(*i).count() == 3)
+                        .count()
+                        == 1;
+
+                let is_x = state.g.size() == 4
+                    && (0..state.g.size())
+                        .filter(|i| state.g.neighbors(*i).count() == 3)
+                        .count()
+                        == 1
+                    && (0..state.g.size())
+                        .filter(|i| state.g.neighbors(*i).count() == 1)
+                        .count()
+                        == 3;
+
+                if !is_chain && !is_small_circle {
+                    if !is_x {
+                        return None;
+                    }
+                }
 
                 // Iterate over the different options to attach this subgraph.
                 Some(
@@ -224,7 +250,7 @@ where
                         .into_iter()
                         .filter_map(move |attachment| {
                             let new_node = attachment.new_node;
-                            
+
                             // Find the node(s) in sg that the new node is attached to.
                             let attached_node: Option<Vec<usize>> = attachment
                                 .new_node
@@ -234,53 +260,32 @@ where
 
                             // check if the attached_node already contained a similar new_node.
                             // this means checking if the combination of atom label and number of bonds is already present in the bitset.
-                            let node_attachment_information: Option<_> =
-                                if let Some(attached_node) = attached_node {
-                                    // Only the anchor can gain neighbors.
-                                    if attached_node
-                                        .iter()
-                                        .map(|sgi| mapping[sgi])
-                                        .all(|gi| anchor != gi)
+                            if let Some(attached_node) = attached_node {
+                                // Only the anchor can gain neighbors.
+                                if attached_node
+                                    .iter()
+                                    .map(|sgi| mapping[sgi])
+                                    .all(|gi| anchor != gi)
+                                {
+                                    return None;
+                                }
+
+                                for sgi in attached_node {
+                                    let gi = mapping[&sgi];
+
+                                    // If this atom cannot have another neighbor, skip this.
+                                    if state
+                                        .g
+                                        .neighbors(gi)
+                                        .map(|j| state.g.bonds().get(gi, j))
+                                        .sum::<u8>()
+                                        >= crate::Atoms::max_bonds(state.g.atoms()[gi])
                                     {
+                                        // println!("this would violate bonding rules, so we skip him.");
                                         return None;
                                     }
-
-                                    // if sg.atoms()[new_node.unwrap()] == 1 {
-                                    //     return None;
-                                    // }
-
-                                    if attached_node.len() == 1 {
-                                        let sgi = attached_node.into_iter().next().unwrap();
-                                        let gi = mapping[&sgi];
-                                        let new_node = new_node.unwrap();
-                                        let n_bonds = *sg.bonds().get(sgi, new_node);
-                                        let label = sg.atoms()[new_node] as u8;
-
-                                        // If this atom cannot have another neighbor, skip this.
-                                        if state
-                                            .g
-                                            .neighbors(gi)
-                                            .map(|j| state.g.bonds().get(gi, j))
-                                            .sum::<u8>()
-                                            >= crate::Atoms::max_bonds(state.g.atoms()[gi])
-                                        {
-                                            // println!("this would violate bonding rules, so we skip him.");
-                                            return None;
-                                        }
-
-                                        // If this has already been tried (see below), skip this attachment.
-                                        if attached_nodes.borrow()[gi].is_set(label, n_bonds) {
-                                            // println!("already had a {} attached this iteration.", label);
-                                            // return None;
-                                        }
-
-                                        Some((gi, label, n_bonds))
-                                    } else {
-                                        None
-                                    }
-                                } else {
-                                    None
-                                };
+                                }
+                            }
 
                             // Actually perform the attachment and create a graph.
                             let g = crate::attachment::perform(&state.g, &sg, mapping, new_node);
@@ -288,7 +293,8 @@ where
                             // Rule out graphs with too many atom bonds.
                             for i in 0..g.size() {
                                 let s: u8 = (0..g.size()).map(|j| g.bonds().get(i, j)).sum();
-                                if s > crate::Atoms::max_bonds(g.atoms()[i]) {
+                                let e = g.atoms()[i];
+                                if s > crate::Atoms::max_bonds(e) {
                                     // println!("this would violate bonding rules.");
                                     return None;
                                 }
@@ -300,11 +306,7 @@ where
                             // Check, if by attaching this subgraph in this way,
                             // we used more subgraphs than we're allowed to.
                             if used_subgraphs.is_subset_of(&self.subgraphs) {
-                                // mark this attachment option
-                                if let Some((gi, label, n_bonds)) = node_attachment_information {
-                                    attached_nodes.borrow_mut()[gi].set_flag(label, n_bonds);
-                                }
-                                // println!("whooo");
+                                // println!("{}", idx);
                                 Some(State::new(g, used_subgraphs))
                             } else {
                                 // use std::hash::Hasher;

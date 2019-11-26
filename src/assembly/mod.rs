@@ -7,10 +7,10 @@ use std::hash::Hash;
 mod state;
 use self::state::State;
 
-mod bitset;
+// mod bitset;
 mod context;
 pub(crate) mod run;
-pub use self::bitset::BitSet;
+// pub use self::bitset::BitSet;
 
 #[cfg(test)]
 mod test;

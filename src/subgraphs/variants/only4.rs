@@ -54,6 +54,10 @@ impl subgraphs::Subgraphs for Only4 {
     fn amount_of(&self, g: &Graph) -> usize {
         *self.subgraphs.get(g).unwrap_or(&0)
     }
+
+    fn molecule_size(&self) -> usize {
+        0
+    }
 }
 
 impl Hash for Only4 {
