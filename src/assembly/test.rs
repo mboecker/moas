@@ -34,7 +34,7 @@ fn test_rings(structure: &str) -> HashSet<Graph> {
         let f = std::fs::File::create(filename).unwrap();
         crate::prelude::dump_set(f, gs.iter()).unwrap();
     }
-    
+
     gs
 }
 

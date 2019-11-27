@@ -7,8 +7,6 @@ pub(super) fn are_isomorphic(g1: &Graph, g2: &Graph) -> bool {
     debug_assert_eq!(g1.size(), g2.size());
     debug_assert_eq!(g1.label_counts(), g2.label_counts());
 
-    println!("start");
-
     // Amount of nodes in the graphs.
     let n = g1.size();
 
@@ -26,8 +24,6 @@ pub(super) fn are_isomorphic(g1: &Graph, g2: &Graph) -> bool {
     // Keep a record of visited, impossible to satisfy states.
     // let mut impossible = HashSet::new();
 
-    println!("mid");
-
     let r = inner(
         g1,
         g2,
@@ -38,8 +34,6 @@ pub(super) fn are_isomorphic(g1: &Graph, g2: &Graph) -> bool {
         // &mut impossible,
     );
 
-    println!("done");
-    
     r
 }
 

@@ -318,10 +318,14 @@ impl Graph {
     /// Used for efficient isomorphy testing.
     pub fn to_petgraph(&self) -> petgraph::Graph<usize, u8, petgraph::Undirected> {
         use itertools::Itertools;
-
-        let mut g = petgraph::Graph::with_capacity(self.size(), self.size());
-        let node_indices: Vec<_> = (0..self.size()).map(|i| g.add_node(self.atoms[i])).collect();
-        for (i, j) in (0..self.size()).tuple_combinations::<(_,_)>().filter(|(i,j)| i < j) {
+        let mut g = petgraph::Graph::with_capacity(self.size(), self.number_of_edges());
+        let node_indices: Vec<_> = (0..self.size())
+            .map(|i| g.add_node(self.atoms[i]))
+            .collect();
+        for (i, j) in (0..self.size())
+            .tuple_combinations::<(_, _)>()
+            .filter(|(i, j)| i < j)
+        {
             let v = self.bonds.get(i, j);
             if v > &0 {
                 g.add_edge(node_indices[i], node_indices[j], *v);
