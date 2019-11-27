@@ -1,7 +1,7 @@
 use super::bitset::BitSet;
 use crate::extra::Similar;
 use crate::Graph;
-use std::collections::HashSet;
+// use std::collections::HashSet;
 
 pub(super) fn are_isomorphic(g1: &Graph, g2: &Graph) -> bool {
     debug_assert_eq!(g1.size(), g2.size());
@@ -24,7 +24,7 @@ pub(super) fn are_isomorphic(g1: &Graph, g2: &Graph) -> bool {
     let mut taken_g2_nodes = BitSet::empty(n);
 
     // Keep a record of visited, impossible to satisfy states.
-    let mut impossible = HashSet::new();
+    // let mut impossible = HashSet::new();
 
     println!("mid");
 
@@ -35,7 +35,7 @@ pub(super) fn are_isomorphic(g1: &Graph, g2: &Graph) -> bool {
         &mut undecided_nodes,
         &mut taken_g2_nodes,
         &mut partial_mapping,
-        &mut impossible,
+        // &mut impossible,
     );
 
     println!("done");
@@ -71,18 +71,18 @@ fn inner(
     undecided_nodes: &mut BitSet,
     taken_g2_nodes: &mut BitSet,
     partial_mapping: &mut Vec<usize>,
-    impossible: &mut HashSet<Vec<usize>>,
+    // impossible: &mut HashSet<Vec<usize>>,
 ) -> bool {
     // If this is a leaf node, check if the resulting mapping is valid.
     if undecided_nodes.is_empty() {
-        if impossible.contains(partial_mapping) {
-            return false;
-        }
+        // if impossible.contains(partial_mapping) {
+        //     return false;
+        // }
 
         if verify_mapping(g1, g2, partial_mapping) {
             return true;
         } else {
-            impossible.insert(partial_mapping.clone());
+            // impossible.insert(partial_mapping.clone());
             return false;
         }
     }
@@ -111,7 +111,7 @@ fn inner(
                 undecided_nodes,
                 taken_g2_nodes,
                 partial_mapping,
-                impossible,
+                // impossible,
             ) {
                 return true;
             }
