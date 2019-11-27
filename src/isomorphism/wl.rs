@@ -8,7 +8,7 @@ type Name = [(u8, usize); 4];
 
 /// Relabels the graph according to its immediate neighbors.
 pub fn relabel(g: &mut Graph) {
-    assert!((0..g.size())
+    debug_assert!((0..g.size())
         .map(|i| g.neighbors(i).map(|j| g.bonds().get(i, j)).sum())
         .all(|x: u8| x < 5));
 

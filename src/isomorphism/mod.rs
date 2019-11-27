@@ -19,11 +19,11 @@ pub fn are_isomorphic(g1: &Graph, g2: &Graph) -> bool {
         return true;
     }
 
-    if g1.size() > 6 {
-        let g1 = g1.to_petgraph();
-        let g2 = g2.to_petgraph();
-        return petgraph::algo::is_isomorphic_matching(&g1, &g2, |i, j| i == j, |i, j| i == j);
-    }
+    // if g1.size() > 10 {
+    //     let g1 = g1.to_petgraph();
+    //     let g2 = g2.to_petgraph();
+    //     return petgraph::algo::is_isomorphic_matching(&g1, &g2, |i, j| i == j, |i, j| i == j);
+    // }
 
     // create two copies of the graphs so that we can alter the node names.
     let mut g1 = g1.clone();
