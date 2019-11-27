@@ -280,7 +280,12 @@ fn main() {
 
                 if let Some(gs) = gs {
                     // cid, duplicates, secs
-                    println!(", {dup}, {sg_dur}, {dur}", dup = gs.len(), sg_dur = sg_dur.as_secs_f64(), dur = dur.as_secs_f64());
+                    println!(
+                        ", {dup}, {sg_dur}, {dur}",
+                        dup = gs.len(),
+                        sg_dur = sg_dur.as_secs_f64(),
+                        dur = dur.as_secs_f64()
+                    );
 
                     // assert!(gs.contains(&g), "The assembly of cid {} failed.", x.cid);
 
@@ -290,7 +295,11 @@ fn main() {
                         crate::prelude::dump_set(f, gs.iter()).unwrap();
                     }
                 } else {
-                    println!(", NA, {sg_dur}, {dur}", sg_dur = sg_dur.as_secs_f64(), dur = dur.as_secs_f64());
+                    println!(
+                        ", NA, {sg_dur}, {dur}",
+                        sg_dur = sg_dur.as_secs_f64(),
+                        dur = dur.as_secs_f64()
+                    );
                 }
             }
         }

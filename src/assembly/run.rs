@@ -86,8 +86,22 @@ where
 
             if crate::statistics::trace_enabled() {
                 println!("Starting iteration {} at {}", iter, Utc::now().to_rfc2822());
-                println!("Active Queue: {}", self.q_active.len());
-                println!("Passive Queue: {}", self.q_passive.len());
+                println!(
+                    "Active Queue: {} ({:.2} KiB)",
+                    self.q_active.len(),
+                    self.q_active
+                        .iter()
+                        .map(|s| s.g.bytes() as f64 / 1024f64)
+                        .sum::<f64>()
+                );
+                println!(
+                    "Passive Queue: {} ({:.2} KiB)",
+                    self.q_passive.len(),
+                    self.q_passive
+                        .iter()
+                        .map(|s| s.g.bytes() as f64 / 1024f64)
+                        .sum::<f64>()
+                );
             }
 
             let new_queue = self.iterate();
@@ -125,22 +139,32 @@ where
         let subgraphs = self.subgraphs;
 
         #[cfg(feature = "parallel")]
-        return Some(
-            self.q_passive
-                .into_par_iter()
-                .filter(|state| state.is_successful(&subgraphs))
-                .map(|state| state.g)
-                .collect(),
-        );
+        let result: HashSet<Graph> = self
+            .q_passive
+            .into_par_iter()
+            .filter(|state| state.is_successful(&subgraphs))
+            .map(|state| state.g)
+            .collect();
 
         #[cfg(not(feature = "parallel"))]
-        return Some(
-            self.q_passive
-                .into_iter()
-                .filter(|state| state.is_successful(&subgraphs))
-                .map(|state| state.g)
-                .collect(),
-        );
+        let result: HashSet<Graph> = self
+            .q_passive
+            .into_iter()
+            .filter(|state| state.is_successful(&subgraphs))
+            .map(|state| state.g)
+            .collect();
+
+        if crate::statistics::trace_enabled() {
+            println!(
+                "Size of resulting set: {:.2} KiB",
+                result
+                    .iter()
+                    .map(|g| g.bytes() as f64 / 1024f64)
+                    .sum::<f64>()
+            );
+        }
+
+        Some(result)
     }
 
     fn iterate(&self) -> HashSet<State<S>> {

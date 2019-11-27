@@ -8,7 +8,7 @@ type Name = [(u8, usize); 4];
 
 /// Relabels the graph according to its immediate neighbors.
 pub fn relabel(g: &mut Graph) {
-    debug_assert!((0..g.size())
+    assert!((0..g.size())
         .map(|i| g.neighbors(i).map(|j| g.bonds().get(i, j)).sum())
         .all(|x: u8| x < 5));
 
@@ -53,7 +53,8 @@ pub fn relabel(g: &mut Graph) {
         .map(|(name_id, name)| (name, name_id))
         .collect();
 
-    let label_ids: BTreeMap<usize, usize> = compressed_labels.into_iter()
+    let label_ids: BTreeMap<usize, usize> = compressed_labels
+        .into_iter()
         .enumerate()
         .map(|(new_label, label)| (label, new_label))
         .collect();

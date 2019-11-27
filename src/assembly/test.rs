@@ -26,6 +26,7 @@ fn test_rings(structure: &str) -> HashSet<Graph> {
     }
 
     let gs = assemble(sg, None).unwrap();
+
     assert!(gs.contains(&g));
 
     if crate::statistics::trace_enabled() {
@@ -33,7 +34,7 @@ fn test_rings(structure: &str) -> HashSet<Graph> {
         let f = std::fs::File::create(filename).unwrap();
         crate::prelude::dump_set(f, gs.iter()).unwrap();
     }
-
+    
     gs
 }
 

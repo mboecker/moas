@@ -28,6 +28,10 @@ impl<T> Matrix<T> {
     pub fn get_mut(&mut self, i: usize, j: usize) -> &mut T {
         &mut self.d[i + j * self.size]
     }
+
+    pub fn bytes(&self) -> usize {
+        self.d.capacity() * std::mem::size_of::<T>()
+    }
 }
 
 pub fn dump_set<'a>(

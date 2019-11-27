@@ -126,6 +126,12 @@ impl Graph {
         self.n
     }
 
+    /// Returns the size in bytes of this graph occupies.
+    pub fn bytes(&self) -> usize {
+        self.atoms.capacity() * std::mem::size_of::<usize>()
+            + self.bonds.bytes() * std::mem::size_of::<u8>()
+    }
+
     /// Returns the bond matrix of this graph.
     pub fn bonds(&self) -> &Matrix<u8> {
         &self.bonds
@@ -306,6 +312,22 @@ impl Graph {
             .map(|(sg, v)| if sg.is_circular() { v } else { 0 })
             .sum();
         (three, four)
+    }
+
+    /// Translates this graph structure into a petgraph-Graph.
+    /// Used for efficient isomorphy testing.
+    pub fn to_petgraph(&self) -> petgraph::Graph<usize, u8, petgraph::Undirected> {
+        use itertools::Itertools;
+
+        let mut g = petgraph::Graph::with_capacity(self.size(), self.size());
+        let node_indices: Vec<_> = (0..self.size()).map(|i| g.add_node(self.atoms[i])).collect();
+        for (i, j) in (0..self.size()).tuple_combinations::<(_,_)>().filter(|(i,j)| i < j) {
+            let v = self.bonds.get(i, j);
+            if v > &0 {
+                g.add_edge(node_indices[i], node_indices[j], *v);
+            }
+        }
+        g
     }
 }
 

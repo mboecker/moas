@@ -1,7 +1,7 @@
-mod bitset;
+// mod bitset;
 mod fast;
-mod slow;
-mod wl;
+// mod slow;
+// mod wl;
 
 use crate::Graph;
 
@@ -19,28 +19,32 @@ pub fn are_isomorphic(g1: &Graph, g2: &Graph) -> bool {
         return true;
     }
 
-    // create two copies of the graphs so that we can alter the node names.
-    let mut g1 = g1.clone();
-    let mut g2 = g2.clone();
+    let g1 = g1.to_petgraph();
+    let g2 = g2.to_petgraph();
+    petgraph::algo::is_isomorphic_matching(&g1, &g2, |i, j| i == j, |i, j| i == j)
 
-    // how many iterations of the relabeling-algorithm to do.
-    const N_ITERS: usize = 1;
+    // // create two copies of the graphs so that we can alter the node names.
+    // let mut g1 = g1.clone();
+    // let mut g2 = g2.clone();
 
-    for _ in 0..N_ITERS {
-        // do a relabelling iteration
-        // rename each node by appending their direct neighbors to themselves.
-        wl::relabel(&mut g1);
-        wl::relabel(&mut g2);
+    // // how many iterations of the relabeling-algorithm to do.
+    // const N_ITERS: usize = 1;
 
-        let l1 = g1.label_counts();
-        let l2 = g2.label_counts();
+    // for _ in 0..N_ITERS {
+    //     // do a relabelling iteration
+    //     // rename each node by appending their direct neighbors to themselves.
+    //     wl::relabel(&mut g1);
+    //     wl::relabel(&mut g2);
 
-        // check if the label counts are the same.
-        // If they are not, the graphs cannot be isomorphic.
-        if l1 != l2 {
-            return false;
-        }
-    }
+    //     let l1 = g1.label_counts();
+    //     let l2 = g2.label_counts();
 
-    slow::are_isomorphic(&g1, &g2)
+    //     // check if the label counts are the same.
+    //     // If they are not, the graphs cannot be isomorphic.
+    //     if l1 != l2 {
+    //         return false;
+    //     }
+    // }
+
+    // slow::are_isomorphic(&g1, &g2)
 }
