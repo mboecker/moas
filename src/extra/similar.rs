@@ -13,13 +13,19 @@ pub struct Similar {
 
 impl Similar {
     pub fn new(g: &Graph) -> Similar {
+        // An array of node ids, sorted by their label.
+        // Stably sorted, so the node ids in a label-bucket are in ascending order.
         let mut node_indices: Vec<_> = (0..g.size()).collect();
         node_indices.sort_by_key(|i| g.atoms()[*i]);
 
+        // Build an index into the array.
         let mut bucket_starts = Vec::new();
 
+        // Special case: start with the index and label of the first node.
         let mut last_start = 0;
         let mut current_label = g.atoms()[0];
+
+        // Start on second node, because the first one has already been handled.
         for i in 1..g.size() {
             let node_index = node_indices[i];
             let node_label = g.atoms()[node_index];
@@ -33,6 +39,8 @@ impl Similar {
                 current_label = node_label;
             }
         }
+
+        // Add the last, unfinished bucket to the index.
         bucket_starts.push((current_label, (last_start, g.size())));
 
         Similar {
