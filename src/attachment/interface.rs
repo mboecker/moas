@@ -23,7 +23,7 @@ pub fn attach(g: &Graph, sg: &Graph) -> HashSet<Result> {
 
     for (i, l) in sg.atoms().iter().enumerate() {
         for j in similar.find(*l) {
-            q.active.insert(Mapping::new(i, j));
+            q.active.insert(Mapping::new(i, *j));
         }
     }
 
