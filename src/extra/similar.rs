@@ -23,7 +23,7 @@ impl Similar {
 
         // Special case: start with the index and label of the first node.
         let mut last_start = 0;
-        let mut current_label = g.atoms()[0];
+        let mut current_label = g.atoms()[node_indices[0]];
 
         // Start on second node, because the first one has already been handled.
         for i in 1..g.size() {
@@ -42,6 +42,15 @@ impl Similar {
 
         // Add the last, unfinished bucket to the index.
         bucket_starts.push((current_label, (last_start, g.size())));
+
+        if cfg!(debug) {
+            for (label, (i, j)) in &bucket_starts {
+                for k in *i..*j {
+                    let idx = node_indices[k];
+                    debug_assert_eq!(label, &g.atoms()[idx], "bucket {} was wrong: {} ({}) in {}..{} had a wrong label", label, k, idx, i, j);
+                }
+            }
+        }
 
         Similar {
             node_indices,
