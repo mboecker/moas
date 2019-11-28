@@ -5,6 +5,7 @@ pub struct Similar {
     // // Partitioned into buckets containing the node indices
     // // |---|----|-|
     // // 111122222334
+    // // 057946...
     // node_indices: Vec<usize>,
 
     // // Index into node_indices
