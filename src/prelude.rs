@@ -48,6 +48,7 @@ pub fn dump_set<'a>(
     std::io::Result::Ok(())
 }
 
+#[allow(dead_code)]
 pub fn dump_map<'a>(
     mut out: impl Write,
     set: impl Iterator<Item = (&'a Graph, &'a usize)>,

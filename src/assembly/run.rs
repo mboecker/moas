@@ -293,35 +293,35 @@ where
                                 // println!("{}", idx);
                                 Some(State::new(g, used_subgraphs))
                             } else {
-                                use std::hash::Hasher;
-                                use std::io::Write;
-                                let mut hasher =
-                                    std::collections::hash_map::DefaultHasher::default();
-                                sg.hash(&mut hasher);
-                                let hash = hasher.finish();
+                                // use std::hash::Hasher;
+                                // use std::io::Write;
+                                // let mut hasher =
+                                //     std::collections::hash_map::DefaultHasher::default();
+                                // sg.hash(&mut hasher);
+                                // let hash = hasher.finish();
 
-                                if crate::statistics::trace_enabled() {
-                                    let filename = format!("trace/sgs_{}_invalid.dot", hash);
-                                    let mut f = std::fs::File::create(filename).unwrap();
-                                    writeln!(&mut f, "graph invalid {{").unwrap();
-                                    sg.dump(&mut f, 0, false).unwrap();
-                                    g.dump(&mut f, sg.size(), true).unwrap();
-                                    writeln!(&mut f, "}}").unwrap();
-                                }
+                                // if crate::statistics::trace_enabled() {
+                                //     let filename = format!("trace/sgs_{}_invalid.dot", hash);
+                                //     let mut f = std::fs::File::create(filename).unwrap();
+                                //     writeln!(&mut f, "graph invalid {{").unwrap();
+                                //     sg.dump(&mut f, 0, false).unwrap();
+                                //     g.dump(&mut f, sg.size(), true).unwrap();
+                                //     writeln!(&mut f, "}}").unwrap();
+                                // }
 
-                                if crate::statistics::trace_enabled() {
-                                    let filename = format!("trace/sgs_{}_used.dot", hash);
-                                    let f = std::fs::File::create(filename).unwrap();
-                                    crate::prelude::dump_map(f, used_subgraphs.with_counts())
-                                        .unwrap();
-                                }
+                                // if crate::statistics::trace_enabled() {
+                                //     let filename = format!("trace/sgs_{}_used.dot", hash);
+                                //     let f = std::fs::File::create(filename).unwrap();
+                                //     crate::prelude::dump_map(f, used_subgraphs.with_counts())
+                                //         .unwrap();
+                                // }
 
-                                if crate::statistics::trace_enabled() {
-                                    let filename = format!("trace/sgs_{}_avail.dot", hash);
-                                    let f = std::fs::File::create(filename).unwrap();
-                                    crate::prelude::dump_map(f, self.subgraphs.with_counts())
-                                        .unwrap();
-                                }
+                                // if crate::statistics::trace_enabled() {
+                                //     let filename = format!("trace/sgs_{}_avail.dot", hash);
+                                //     let f = std::fs::File::create(filename).unwrap();
+                                //     crate::prelude::dump_map(f, self.subgraphs.with_counts())
+                                //         .unwrap();
+                                // }
 
                                 // println!("the subgraphs just dont add up.");
                                 None

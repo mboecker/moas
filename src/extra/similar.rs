@@ -47,19 +47,30 @@ impl Similar {
             for (label, (i, j)) in &bucket_starts {
                 for k in *i..*j {
                     let idx = node_indices[k];
-                    debug_assert_eq!(label, &g.atoms()[idx], "bucket {} was wrong: {} ({}) in {}..{} had a wrong label", label, k, idx, i, j);
+                    debug_assert_eq!(
+                        label,
+                        &g.atoms()[idx],
+                        "bucket {} was wrong: {} ({}) in {}..{} had a wrong label",
+                        label,
+                        k,
+                        idx,
+                        i,
+                        j
+                    );
                 }
             }
         }
 
         Similar {
             node_indices,
-            bucket_starts
+            bucket_starts,
         }
     }
 
     pub fn find<'a>(&'a self, label: usize) -> &'a [usize] {
-        let idx = self.bucket_starts.binary_search_by_key(&label, |(key, _)| *key);
+        let idx = self
+            .bucket_starts
+            .binary_search_by_key(&label, |(key, _)| *key);
         if let Ok(idx) = idx {
             let (found_label, (from, to)) = self.bucket_starts[idx];
             assert_eq!(found_label, label);
