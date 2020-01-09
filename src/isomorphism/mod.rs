@@ -1,5 +1,5 @@
 // mod bitset;
-mod fast;
+// mod fast;
 // // mod slow;
 // mod wl;
 
@@ -10,9 +10,9 @@ use crate::Graph;
 pub fn are_isomorphic(g1: &Graph, g2: &Graph) -> bool {
     // Check some graph features first.
     // If these dont match, the graphs cannot be isomorphic.
-    if !fast::are_isomorphic(&g1, &g2) {
-        return false;
-    }
+    // if !fast::are_isomorphic(&g1, &g2) {
+    //     return false;
+    // }
 
     // // if they are equal, they are also isomorphic.
     // if g1.atoms() == g2.atoms() && g1.bonds() == g2.bonds() {
