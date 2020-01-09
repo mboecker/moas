@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use super::assemble;
 use crate::subgraphs;
 use crate::subgraphs::Subgraphs;
@@ -38,8 +40,42 @@ fn test_rings(structure: &str) -> HashSet<Graph> {
     gs
 }
 
+fn test_7(structure: &str) -> HashSet<Graph> {
+    let g = Graph::from_json(structure);
+
+    if crate::statistics::trace_enabled() {
+        use std::io::Write;
+        let filename = "trace/original.dot";
+        let mut f = std::fs::File::create(filename).unwrap();
+        writeln!(&mut f, "graph g {{").unwrap();
+        g.dump(&mut f, 0, true).unwrap();
+        writeln!(&mut f, "}}").unwrap();
+    }
+
+    let sg = subgraphs::variants::Only7::new(&g);
+
+    if crate::statistics::trace_enabled() {
+        let filename = "trace/subgraphs.dot";
+        let f = std::fs::File::create(filename).unwrap();
+        crate::prelude::dump_set(f, sg.all_subgraphs()).unwrap();
+    }
+
+    let gs = assemble(sg, None).unwrap();
+
+    assert!(gs.contains(&g));
+
+    if crate::statistics::trace_enabled() {
+        let filename = "trace/result.dot";
+        let f = std::fs::File::create(filename).unwrap();
+        crate::prelude::dump_set(f, gs.iter()).unwrap();
+    }
+
+    gs
+}
+
 fn test_assembly(structure: &str) -> HashSet<Graph> {
     test_rings(structure)
+    // test_7(structure)
 }
 
 #[test]
