@@ -169,17 +169,19 @@ where
 
     fn iterate(&self) -> HashSet<State<S>> {
         #[cfg(feature = "parallel")]
-        return self
-            .q_active
-            .par_iter()
-            .map(|state| self.explore_state(state))
-            .reduce(
-                || HashSet::new(),
-                |mut a, b| {
-                    a.extend(b);
-                    a
-                },
-            );
+        {
+            return self
+                .q_active
+                .par_iter()
+                .map(|state| self.explore_state(state))
+                .reduce(
+                    || HashSet::new(),
+                    |mut a, b| {
+                        a.extend(b);
+                        a
+                    },
+                );
+        }
 
         #[cfg(not(feature = "parallel"))]
         {
