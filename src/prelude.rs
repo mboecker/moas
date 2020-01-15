@@ -20,6 +20,18 @@ where
     }
 }
 
+impl<T> Matrix<T>
+where
+    T: Clone,
+{
+    pub fn fill_new(a: usize, default: T) -> Matrix<T> {
+        Matrix {
+            d: (0..a * a).map(|_| default.clone()).collect(),
+            size: a,
+        }  
+    }
+}
+
 impl<T> Matrix<T> {
     pub fn get(&self, i: usize, j: usize) -> &T {
         &self.d[i + j * self.size]

@@ -272,7 +272,7 @@ fn cid_22116718() {
         .unwrap()
         .clone();
 
-    let run = crate::assembly::run::Run::with_starting_graph(sg, starting_node);
+    let run = crate::assembly::run::Run::with_starting_graph(sg, starting_node, None);
     let gs = run.assemble().unwrap();
     assert!(gs.contains(&g));
 

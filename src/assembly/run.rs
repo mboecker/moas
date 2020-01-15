@@ -36,25 +36,16 @@ where
     pub fn new(subgraphs: S, max_queue_size: Option<usize>) -> Run<S> {
         // Generate inital state.
         let g = subgraphs.select_starting_graph();
-        let sg = S::new(&g);
-        let state = State::new(g, sg);
-
-        let q_passive = HashSet::new();
-        let mut q_active = HashSet::new();
-        q_active.insert(state);
-
-        Run {
-            subgraphs,
-            q_active,
-            q_passive,
-            current_iter: 0,
-            max_queue_size,
-        }
+        Run::with_starting_graph(subgraphs, g, max_queue_size)
     }
 
-    #[cfg(test)]
-    pub fn with_starting_graph(subgraphs: S, g: Graph) -> Run<S> {
-        // Generate inital state.
+    pub fn with_starting_graph(
+        subgraphs: S,
+        mut g: Graph,
+        max_queue_size: Option<usize>,
+    ) -> Run<S> {
+        g.freeze_nonexisting_edges();
+
         let sg = S::new(&g);
         let state = State::new(g, sg);
 
@@ -67,7 +58,7 @@ where
             q_active,
             q_passive,
             current_iter: 0,
-            max_queue_size: None,
+            max_queue_size: max_queue_size,
         }
     }
 
@@ -274,7 +265,7 @@ where
                             }
 
                             // Actually perform the attachment and create a graph.
-                            let g = crate::attachment::perform(&state.g, &sg, mapping, new_node);
+                            let g = crate::attachment::perform(&state.g, &sg, mapping, new_node)?;
 
                             // Rule out graphs with too many atom bonds.
                             for i in 0..g.size() {

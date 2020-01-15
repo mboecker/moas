@@ -6,7 +6,7 @@ pub fn perform(
     sg: &Graph,
     mapping: BTreeMap<usize, usize>,
     new_node: Option<usize>,
-) -> Graph {
+) -> Option<Graph> {
     if new_node.is_none() {
         // only a new edge has been added
         let mut g = g.clone();
@@ -15,13 +15,22 @@ pub fn perform(
                 let mi = mapping[&i];
                 let mj = mapping[&j];
                 let v = *sg.bonds().get(i, j);
-                if g.bonds().get(mi, mj) == &0 {
-                    *g.bonds_mut().get_mut(mi, mj) = v;
-                    *g.bonds_mut().get_mut(mj, mi) = v;
+                if v > 0  {
+                    if g.bonds().get(mi, mj) == &0 {
+                        if !g.is_edge_possible(mi, mj) {
+                            return None;
+                        }
+
+                        *g.bonds_mut().get_mut(mi, mj) = v;
+                        *g.bonds_mut().get_mut(mj, mi) = v;
+                    }
+
+                    g.set_edge_impossible(mi, mj);
+                    g.set_edge_impossible(mj, mi);
                 }
             }
         }
-        g
+        Some(g)
     } else {
         // a new node has been added
         // println!("adding new node");
@@ -35,10 +44,18 @@ pub fn perform(
         for i in 0..sg.size() {
             if let Some(&mi) = mapping.get(&i) {
                 let v = *sg.bonds().get(i, j);
+
+                if v != *g.bonds().get(mi, mj) && !g.is_edge_possible(mi, mj) {
+                    return None;
+                }
+
                 *g.bonds_mut().get_mut(mi, mj) = v;
                 *g.bonds_mut().get_mut(mj, mi) = v;
+
+                g.set_edge_impossible(mi, mj);
+                g.set_edge_impossible(mj, mi);
             }
         }
-        g
+        Some(g)
     }
 }

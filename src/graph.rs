@@ -16,6 +16,9 @@ pub struct Graph {
 
     /// How are these atoms bonded?
     bonds: Matrix<u8>,
+
+    /// How are these atoms bonded?
+    edge_possible: Matrix<bool>,
 }
 
 impl Graph {
@@ -23,7 +26,14 @@ impl Graph {
     pub fn with_size(n: usize) -> Graph {
         let atoms = vec![0usize; n];
         let bonds: Matrix<u8> = Matrix::new(n);
-        Graph { n, atoms, bonds }
+        let edge_possible: Matrix<bool> = Matrix::fill_new(n, true);
+
+        Graph {
+            n,
+            atoms,
+            bonds,
+            edge_possible,
+        }
     }
 
     /// Parses the given JSON and transforms it into a graph object.
@@ -55,7 +65,14 @@ impl Graph {
             *bonds.get_mut(j, i) = k;
         }
 
-        Graph { n, atoms, bonds }
+        let edge_possible: Matrix<bool> = Matrix::new(n);
+
+        Graph {
+            n,
+            atoms,
+            bonds,
+            edge_possible,
+        }
     }
 
     /// Parses the given JSON and transforms it into a graph object.
@@ -87,7 +104,14 @@ impl Graph {
             *bonds.get_mut(j, i) = k;
         }
 
-        Graph { n, atoms, bonds }
+        let edge_possible: Matrix<bool> = Matrix::new(n);
+
+        Graph {
+            n,
+            atoms,
+            bonds,
+            edge_possible,
+        }
     }
 
     #[cfg(test)]
@@ -332,6 +356,37 @@ impl Graph {
             }
         }
         g
+    }
+
+    /// In some cases, it is known that certain edges can never exist.
+    /// Since a 4-subgraph is fully connected (as far as the molecules its based on allows it),
+    /// that is such a case.
+    /// Then we can mark these edges so that they can never be added again.
+    pub fn freeze_nonexisting_edges(&mut self) {
+        for i in 0..self.atoms.len() {
+            for j in 0..i {
+                if *self.bonds.get(i, j) == 0 {
+                    self.set_edge_impossible(i, j);
+                    self.set_edge_impossible(j, i);
+                }
+            }
+        }
+    }
+
+    /// In some cases, it is known that certain edges can never exist.
+    /// Since a 4-subgraph is fully connected (as far as the molecules its based on allows it),
+    /// that is such a case.
+    /// This method checks, if a certain edge is known to not exist or if it may be added.
+    pub fn is_edge_possible(&self, i: usize, j: usize) -> bool {
+        *self.edge_possible.get(i, j)
+    }
+
+    /// In some cases, it is known that certain edges can never exist.
+    /// Since a 4-subgraph is fully connected (as far as the molecules its based on allows it),
+    /// that is such a case.
+    /// This method saves in the data structure, that a certain edge cannot exist.
+    pub fn set_edge_impossible(&mut self, i: usize, j: usize) {
+        *self.edge_possible.get_mut(i, j) = false;
     }
 }
 
