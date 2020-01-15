@@ -165,22 +165,7 @@ impl subgraphs::Subgraphs for SubgraphsAndRings {
             self.rings6
                 .keys()
                 .chain(self.rings5.keys())
-                .chain(self.subgraphs.keys().filter(|sg| {
-                    let count = sg.atoms().iter().filter(|&e| *e == 1).count();
-                    count == 0
-                }))
-                .chain(self.subgraphs.keys().filter(|sg| {
-                    let count = sg.atoms().iter().filter(|&e| *e == 1).count();
-                    count == 1
-                }))
-                .chain(self.subgraphs.keys().filter(|sg| {
-                    let count = sg.atoms().iter().filter(|&e| *e == 1).count();
-                    count == 2
-                }))
-                .chain(self.subgraphs.keys().filter(|sg| {
-                    let count = sg.atoms().iter().filter(|&e| *e == 1).count();
-                    count == 3
-                }))
+                .chain(self.subgraphs.keys())
                 .chain(self.atoms.keys()),
         )
     }
