@@ -138,12 +138,13 @@ impl Graph {
 
         for (i, j) in (0..self.size()).tuple_combinations() {
             let v = *self.bonds.get(i, j);
+            let w = *self.edge_possible.get(i, j);
 
             *g.bonds.get_mut(i, j) = v;
             *g.bonds.get_mut(j, i) = v;
 
-            g.set_edge_impossible(i, j);
-            g.set_edge_impossible(j, i);
+            *g.edge_possible.get_mut(i, j) = w;
+            *g.edge_possible.get_mut(j, i) = w;
         }
 
         g
@@ -248,14 +249,14 @@ impl Graph {
                     )?;
                 }
 
-                if *self.bonds.get(i as usize, j as usize) == 0 && !self.is_edge_possible(i as usize, j as usize) {
-                    writeln!(
-                        f,
-                        r#"  {} -- {} [type=s, splines=none, color=red, weight=0];"#,
-                        i + offset,
-                        j + offset
-                    )?;
-                }
+                // if *self.bonds.get(i as usize, j as usize) == 0 && !self.is_edge_possible(i as usize, j as usize) {
+                //     writeln!(
+                //         f,
+                //         r#"  {} -- {} [type=s, splines=none, color=red, weight=0];"#,
+                //         i + offset,
+                //         j + offset
+                //     )?;
+                // }
             }
         }
 
