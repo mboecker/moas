@@ -229,10 +229,16 @@ impl Graph {
         offset: usize,
         use_element_names: bool,
     ) -> std::io::Result<()> {
+        let active_node = self.first_unfull_node_id();
+
         for (i, j) in self.atoms.iter().enumerate() {
             if use_element_names {
                 let label = crate::Atoms::label(*j);
-                writeln!(f, r#"  {} [shape=circle, label="{}"];"#, i + offset, label)?;
+                if active_node.is_some() && active_node.unwrap() == i {
+                    writeln!(f, r#"  {} [shape=circle, label="{}", color=blue];"#, i + offset, label)?;
+                } else {
+                    writeln!(f, r#"  {} [shape=circle, label="{}"];"#, i + offset, label)?;
+                }
             } else {
                 writeln!(f, r#"  {} [shape=circle, label="{}"];"#, i + offset, j)?;
             }
@@ -252,7 +258,7 @@ impl Graph {
                 // if *self.bonds.get(i as usize, j as usize) == 0 && !self.is_edge_possible(i as usize, j as usize) {
                 //     writeln!(
                 //         f,
-                //         r#"  {} -- {} [type=s, splines=none, color=red, weight=0];"#,
+                //         r#"  {} -- {} [splines=none, color=red];"#,
                 //         i + offset,
                 //         j + offset
                 //     )?;

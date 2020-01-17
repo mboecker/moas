@@ -3,6 +3,8 @@ use crate::Graph;
 use std::collections::HashSet;
 use std::fmt::Debug;
 use std::hash::Hash;
+use std::time::Instant;
+use std::time::Duration;
 
 mod state;
 use self::state::State;
@@ -21,7 +23,9 @@ mod test;
 pub fn assemble<S: Subgraphs + Eq + Hash + Send + Sync + Debug>(
     s: S,
     max_queue_size: Option<usize>,
+    time_limit: Option<Duration>,
 ) -> Option<HashSet<Graph>> {
-    let r = self::run::Run::new(s, max_queue_size);
+    let time_limit = time_limit.map(|d| Instant::now() + d);
+    let r = self::run::Run::new(s, max_queue_size, time_limit);
     r.assemble()
 }

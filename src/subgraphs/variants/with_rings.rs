@@ -139,17 +139,17 @@ impl subgraphs::Subgraphs for SubgraphsAndRings {
             }
         }
 
-        for (k, v) in self.rings6.iter() {
-            if other.rings6.get(k).unwrap_or(&0) < v {
-                return false;
-            }
-        }
+        // for (k, v) in self.rings6.iter() {
+        //     if other.rings6.get(k).unwrap_or(&0) < v {
+        //         return false;
+        //     }
+        // }
 
-        for (k, v) in self.rings5.iter() {
-            if other.rings5.get(k).unwrap_or(&0) < v {
-                return false;
-            }
-        }
+        // for (k, v) in self.rings5.iter() {
+        //     if other.rings5.get(k).unwrap_or(&0) < v {
+        //         return false;
+        //     }
+        // }
 
         // for (k, v) in self.subgraphs.iter() {
         //     if other.subgraphs.get(k).unwrap_or(&0) < v {

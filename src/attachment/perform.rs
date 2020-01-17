@@ -11,8 +11,9 @@ pub fn perform(
         // only a new edge has been added
         let mut g = g.clone();
         for i in 0..sg.size() {
+            let mi = mapping[&i];
+
             for j in 0..i {
-                let mi = mapping[&i];
                 let mj = mapping[&j];
                 let v = *sg.bonds().get(i, j);
                 if v > 0  {
@@ -25,6 +26,8 @@ pub fn perform(
                         *g.bonds_mut().get_mut(mj, mi) = v;
                     }
 
+                    // // Since the edges (mi, mj) would have been added by this newly attached subgraph,
+                    // // its not allowed to add them in later iterations.
                     g.set_edge_impossible(mi, mj);
                     g.set_edge_impossible(mj, mi);
                 }
@@ -34,11 +37,13 @@ pub fn perform(
     } else {
         // a new node has been added
         // println!("adding new node");
-        let new_node_sg_id = new_node.unwrap();
         let mut g = g.clone_with_extraspace(1);
 
-        let j = new_node_sg_id;
+        // node ids of the new node in both sg and g.
+        let j = new_node.unwrap();
         let mj = g.size() - 1;
+
+        // set correct label.
         g.atoms_mut()[mj] = sg.atoms()[j];
 
         for i in 0..sg.size() {
@@ -49,11 +54,16 @@ pub fn perform(
                     return None;
                 }
 
-                *g.bonds_mut().get_mut(mi, mj) = v;
-                *g.bonds_mut().get_mut(mj, mi) = v;
+                // No edge from the new node to the nodes of the just attached subgraph can be added in the future.
+                if v == 0 {
+                    g.set_edge_impossible(mi, mj);
+                    g.set_edge_impossible(mj, mi);
+                } else {
 
-                g.set_edge_impossible(mi, mj);
-                g.set_edge_impossible(mj, mi);
+                    // Bonds are initialized with 0, so we just need to set them when they're not zero.
+                    *g.bonds_mut().get_mut(mi, mj) = v;
+                    *g.bonds_mut().get_mut(mj, mi) = v;
+                }
             }
         }
         Some(g)

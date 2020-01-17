@@ -10,6 +10,7 @@ extern crate test;
 
 use clap::{App, Arg};
 use rusqlite::{Connection, NO_PARAMS};
+use std::time::Duration;
 
 mod assembly;
 mod atoms;
@@ -81,6 +82,12 @@ fn main() {
                 .takes_value(true),
         )
         .arg(
+            Arg::with_name("time_limit")
+                .short("t")
+                .help("The time limit for the reconstruction of a single molecule. Given in seconds.")
+                .takes_value(true),
+        )
+        .arg(
             Arg::with_name("dot")
                 .long("dot")
                 .help("if you set this flag, only the JSON data of this molecule will be printed.")
@@ -100,6 +107,7 @@ fn main() {
     let conn = Connection::open(sqlite_name).unwrap();
 
     let max_queue_size = matches.value_of("queue_max").map(|x| x.parse().unwrap());
+    let time_limit = matches.value_of("time_limit").map(|x| Duration::from_secs(x.parse().unwrap()));
 
     if let Some(cid) = matches.value_of("compound id") {
         let sql = format!("SELECT cid, structure, is_contiguous, n_atoms, n_edges FROM compounds WHERE cid = {} LIMIT 1", cid);
@@ -148,7 +156,7 @@ fn main() {
             }
 
             // re-assemble the graph
-            let gs = assemble(sg, max_queue_size).expect("overshot max queue size");
+            let gs = assemble(sg, max_queue_size, time_limit).expect("overshot max queue size");
 
             if crate::statistics::trace_enabled() {
                 let filename = "trace/result.dot";
@@ -193,7 +201,7 @@ fn main() {
 
                 // re-assemble the graph
                 let start = std::time::Instant::now();
-                let gs = assemble(sg, max_queue_size);
+                let gs = assemble(sg, max_queue_size, time_limit);
                 let dur = std::time::Instant::now() - start;
 
                 // assert!(gs.contains(&g), "The assembly of cid {} failed.", x.cid);
@@ -275,7 +283,7 @@ fn main() {
 
                 // re-assemble the graph
                 let start = std::time::Instant::now();
-                let gs = assemble(sg, max_queue_size);
+                let gs = assemble(sg, max_queue_size, time_limit);
                 let dur = std::time::Instant::now() - start;
 
                 if let Some(gs) = gs {

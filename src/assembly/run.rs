@@ -5,6 +5,7 @@ use std::collections::BTreeMap;
 use std::collections::HashSet;
 use std::fmt::Debug;
 use std::hash::Hash;
+use std::time::Instant;
 
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
@@ -27,22 +28,26 @@ where
 
     /// Optionally, give a size the current queue can't pass.
     max_queue_size: Option<usize>,
+
+    /// Optionally, give a time limit the computation can't pass.
+    time_limit: Option<Instant>,
 }
 
 impl<S> Run<S>
 where
     S: Subgraphs + Eq + Hash + Send + Sync + Debug,
 {
-    pub fn new(subgraphs: S, max_queue_size: Option<usize>) -> Run<S> {
+    pub fn new(subgraphs: S, max_queue_size: Option<usize>, time_limit: Option<Instant>) -> Run<S> {
         // Generate inital state.
         let g = subgraphs.select_starting_graph();
-        Run::with_starting_graph(subgraphs, g, max_queue_size)
+        Run::with_starting_graph(subgraphs, g, max_queue_size, time_limit)
     }
 
     pub fn with_starting_graph(
         subgraphs: S,
         mut g: Graph,
         max_queue_size: Option<usize>,
+        time_limit: Option<Instant>
     ) -> Run<S> {
         g.freeze_nonexisting_edges();
 
@@ -58,7 +63,8 @@ where
             q_active,
             q_passive,
             current_iter: 0,
-            max_queue_size: max_queue_size,
+            max_queue_size,
+            time_limit
         }
     }
 
@@ -73,7 +79,7 @@ where
 
             // Assemble current active graphs into new graphs.
             self.current_iter = iter;
-            let start = std::time::Instant::now();
+            let start = Instant::now();
 
             if crate::statistics::trace_enabled() {
                 println!("Starting iteration {} at {}", iter, Utc::now().to_rfc2822());
@@ -97,6 +103,13 @@ where
 
             let new_queue = self.iterate();
 
+            // Computation exceeded time limit, abort and return None.
+            if self.time_limit.is_some() && Instant::now() > self.time_limit.unwrap() {
+                return None;
+            }
+
+            // Computation exceeded the maximum number of possibilities to assemble the molecule.
+            // Abort and return None.
             if let Some(max_queue_size) = self.max_queue_size {
                 if new_queue.len() >= max_queue_size {
                     return None;
@@ -104,7 +117,7 @@ where
             }
 
             if crate::statistics::trace_enabled() {
-                let duration = std::time::Instant::now() - start;
+                let duration = Instant::now() - start;
                 println!("Duration: {:.2}s", duration.as_secs_f64());
                 println!();
             }
@@ -112,16 +125,21 @@ where
             // move things from q_active to q_passive if theyre less or equal to the min.
             self.q_passive.extend(self.q_active.drain());
 
+            // If no new states were discovered, stop the algorithm.
             if new_queue.is_empty() {
                 break;
             }
 
+            // Those molecules that weren't processed yet (and are in the passive queue)
+            // will be explored in the next iteration.
             for x in new_queue.into_iter() {
                 if !self.q_passive.contains(&x) {
                     self.q_active.insert(x);
                 }
             }
 
+            // If the active queue is empty now,
+            // no new states would be explored next iteration, so just stop the algorithm.
             if self.q_active.is_empty() {
                 break;
             }
@@ -189,6 +207,13 @@ where
 
     /// Explores one of the current states by trying to attach unused subgraphs.
     fn explore_state(&self, state: &State<S>) -> HashSet<State<S>> {
+
+        // Computation exceeded time limit,
+        // skip this state because its result won't be used anyway.
+        if self.time_limit.is_some() && Instant::now() > self.time_limit.unwrap() {
+            return HashSet::new();
+        }
+
         let anchor = state
             .g
             .atoms()
@@ -216,7 +241,7 @@ where
             .attachable_subgraphs()
             .enumerate()
             .filter_map(|(_idx, sg)| {
-                // Skip this subgraph if we cant legally use it again.
+                // Skip this subgraph if we already used all of those.
                 if state.used.amount_of(sg) >= self.subgraphs.amount_of(sg) {
                     return None;
                 }
@@ -228,7 +253,7 @@ where
                         .filter_map(move |attachment| {
                             let new_node = attachment.new_node;
 
-                            // Find the node(s) in sg that the new node is attached to.
+                            // Find the node(s) in sg that the new_node is attached to.
                             let attached_node: Option<Vec<usize>> = attachment
                                 .new_node
                                 .map(|new_node| sg.neighbors(new_node).collect());
@@ -238,6 +263,7 @@ where
                             // check if the attached_node already contained a similar new_node.
                             // this means checking if the combination of atom label and number of bonds is already present in the bitset.
                             if let Some(attached_node) = attached_node {
+
                                 // Only the anchor can gain neighbors.
                                 if attached_node
                                     .iter()
@@ -258,7 +284,6 @@ where
                                         .sum::<u8>()
                                         >= crate::Atoms::max_bonds(state.g.atoms()[gi])
                                     {
-                                        // println!("this would violate bonding rules, so we skip him.");
                                         return None;
                                     }
                                 }
@@ -267,12 +292,25 @@ where
                             // Actually perform the attachment and create a graph.
                             let g = crate::attachment::perform(&state.g, &sg, mapping, new_node)?;
 
+                            if new_node.is_none() {
+                                // Throw away graphs that don't connect the anchor with another node.
+                                for i in 0..g.size() {
+                                    for j in 0..i {
+                                        if g.bonds().get(i, j) != state.g.bonds().get(i, j) {
+                                            if i != anchor && j != anchor {
+                                                return None;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
                             // Rule out graphs with too many atom bonds.
                             for i in 0..g.size() {
                                 let s: u8 = (0..g.size()).map(|j| g.bonds().get(i, j)).sum();
                                 let e = g.atoms()[i];
+
                                 if s > crate::Atoms::max_bonds(e) {
-                                    // println!("this would violate bonding rules.");
                                     return None;
                                 }
                             }
@@ -283,7 +321,6 @@ where
                             // Check, if by attaching this subgraph in this way,
                             // we used more subgraphs than we're allowed to.
                             if used_subgraphs.is_subset_of(&self.subgraphs) {
-                                // println!("{}", idx);
                                 Some(State::new(g, used_subgraphs))
                             } else {
                                 // use std::hash::Hasher;
