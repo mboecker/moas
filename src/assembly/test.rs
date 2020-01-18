@@ -74,8 +74,10 @@ fn test_7(structure: &str) -> HashSet<Graph> {
 }
 
 fn test_assembly(structure: &str) -> HashSet<Graph> {
-    test_rings(structure)
-    // test_7(structure)
+    let set1 = test_rings(structure);
+    // let set2 = test_7(structure);
+    // assert_eq!(set1, set2);
+    set1
 }
 
 #[test]

@@ -21,6 +21,7 @@ mod isomorphism;
 mod prelude;
 mod statistics;
 mod subgraphs;
+mod generator;
 
 pub use assembly::assemble;
 pub use atoms::Atoms;
@@ -88,6 +89,12 @@ fn main() {
                 .takes_value(true),
         )
         .arg(
+            Arg::with_name("dna")
+                .long("dna")
+                .help("Instead of working on real molecule data, generate synthetic molecules.")
+                .takes_value(true)
+        )
+        .arg(
             Arg::with_name("dot")
                 .long("dot")
                 .help("if you set this flag, only the JSON data of this molecule will be printed.")
@@ -101,13 +108,49 @@ fn main() {
         )
         .get_matches();
 
+    let max_queue_size = matches.value_of("queue_max").map(|x| x.parse().unwrap());
+    let time_limit = matches.value_of("time_limit").map(|x| Duration::from_secs(x.parse().unwrap()));
+
+    if let Some(i) = matches.value_of("dna") {
+        use crate::subgraphs::Subgraphs;
+        use generator::MoleculeGenerator;
+
+        let i = i.parse().unwrap();
+        let g = generator::DnaEsque::generate(i);
+
+        if matches.is_present("dot") {
+            println!("graph g {{");
+            g.dump(std::io::stdout(), 0, true).unwrap();
+            println!("}}");
+            return;
+        }
+
+        let start = std::time::Instant::now();
+        let sg = subgraphs::variants::SubgraphsAndRings::new(&g);
+        let sg_dur = std::time::Instant::now() - start;
+
+        // re-assemble the graph
+        let start = std::time::Instant::now();
+        let gs = assemble(sg, max_queue_size, time_limit);
+        let dur = std::time::Instant::now() - start;
+
+        if gs.is_some() {
+            println!(
+                "{}, {}, {}, {}", i, gs.unwrap().len(), sg_dur.as_secs_f64(), dur.as_secs_f64()
+            );
+        } else {
+            println!(
+                "{}, NA, {}, {}", i, sg_dur.as_secs_f64(), dur.as_secs_f64()
+            );
+        }
+        
+        return;
+    }
+
     let sqlite_name = matches
         .value_of("database file name")
         .unwrap_or("sqlite/pubchem.db");
     let conn = Connection::open(sqlite_name).unwrap();
-
-    let max_queue_size = matches.value_of("queue_max").map(|x| x.parse().unwrap());
-    let time_limit = matches.value_of("time_limit").map(|x| Duration::from_secs(x.parse().unwrap()));
 
     if let Some(cid) = matches.value_of("compound id") {
         let sql = format!("SELECT cid, structure, is_contiguous, n_atoms, n_edges FROM compounds WHERE cid = {} LIMIT 1", cid);
