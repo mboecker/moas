@@ -101,6 +101,12 @@ fn main() {
                 .takes_value(false)
         )
         .arg(
+            Arg::with_name("hash")
+                .long("hash")
+                .help("if you set this flag, only the cid and its identifier will be printed in csv format.")
+                .takes_value(false)
+        )
+        .arg(
             Arg::with_name("cycles")
                 .long("cycles")
                 .help("if you set this flag a csv will be printed with the cid and the number of cycles")
@@ -180,6 +186,12 @@ fn main() {
                 return;
             }
 
+            if matches.is_present("hash") {
+                let id = g.identifier();
+                println!("{}, {}", x.cid, id);
+                continue;
+            }
+
             if crate::statistics::trace_enabled() {
                 use std::io::Write;
                 let filename = "trace/original.dot";
@@ -235,9 +247,15 @@ fn main() {
             for x in iter {
                 use crate::subgraphs::Subgraphs;
 
-                print!("{cid}", cid = x.cid);
-
                 let g = graph::Graph::from_json(x.structure);
+
+                if matches.is_present("hash") {
+                    let id = g.identifier();
+                    println!("{}, {}", x.cid, id);
+                    continue;
+                }   
+
+                print!("{cid}", cid = x.cid);
 
                 // determine the graphs' subgraphs.
                 let sg = subgraphs::variants::SubgraphsAndRings::new(&g);
@@ -302,9 +320,15 @@ fn main() {
                     continue;
                 }
 
-                print!("{cid}", cid = x.cid);
-
                 let g = graph::Graph::from_json(x.structure);
+
+                if matches.is_present("hash") {
+                    let id = g.identifier();
+                    println!("{}, {}", x.cid, id);
+                    continue;
+                }
+
+                print!("{cid}", cid = x.cid);
 
                 // determine the graphs' subgraphs.
                 let start = std::time::Instant::now();

@@ -283,6 +283,54 @@ impl Graph {
         hm
     }
 
+    /// Calculates a String that is identical for isomorph graphs.
+    /// This is similar to the Hash implementation of Graph,
+    /// but outputs a String instead of using a Hasher.
+    pub fn identifier(&self) -> String {
+        let mut hash = String::with_capacity(128);
+
+        // For each combination of node labels, count the edges between these.
+        let mut edge_counts: BTreeMap<(usize, usize, u8), usize> = BTreeMap::new();
+
+        // Hash the node labels and their occurance count in sorted order,
+        // so that their ordering is consistent in different graphs.
+        let mut label_counts = BTreeMap::new();
+        
+        for i in 0..self.size() {
+            // Increase label count of current node.
+            let element1 = self.atoms()[i];
+            *label_counts.entry(element1).or_insert(0) += 1;
+
+
+            for j in 0..i {
+                let v = *self.bonds().get(i, j);
+
+                if v > 0 {      
+                    // normalize element tuple
+                    let element2 = self.atoms()[j];
+                    let tuple = if element1 > element2 {
+                        (element2, element1, v)
+                    } else {
+                        (element1, element2, v)
+                    };
+                    *edge_counts.entry(tuple).or_default() += 1;
+                }
+            }
+        }
+
+        for (l, c) in label_counts {
+            hash.push_str(&format!("{}:{}-", l, c));
+        }
+
+        hash.push('#');
+
+        for ((l1, l2, b), c) in edge_counts {
+            hash.push_str(&format!("{}:{}:{}:{}-", l1, l2, b, c));
+        }
+
+        hash
+    }
+
     /// Changes the internal order of the nodes in this graph.
     /// This function is for testing only.
     #[must_use]
