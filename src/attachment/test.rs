@@ -57,7 +57,7 @@ fn benzol_and_cube() {
         use rand;
         use rand::seq::SliceRandom;
         let mut rng = rand::thread_rng();
-    
+
         let mut order: Vec<_> = (1..6).collect();
         order.shuffle(&mut rng);
         let mut order2 = vec![0];
@@ -71,13 +71,14 @@ fn benzol_and_cube() {
         let r = attach(&g, &sg);
         assert!(r.len() > 0);
 
-        let b = r.into_iter().filter_map(|mapping| {
-            let new_node = mapping.new_node;
-            let mapping = mapping.into();
-            super::perform(&g, &sg, mapping, new_node)
-        }).any(|g| {
-            g.neighbors(g.size() - 1).count() > 1
-        });
+        let b = r
+            .into_iter()
+            .filter_map(|mapping| {
+                let new_node = mapping.new_node;
+                let mapping = mapping.into();
+                super::perform(&g, &sg, mapping, new_node)
+            })
+            .any(|g| g.neighbors(g.size() - 1).count() > 1);
 
         assert!(b);
     }

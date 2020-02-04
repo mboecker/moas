@@ -16,7 +16,7 @@ pub fn perform(
             for j in 0..i {
                 let mj = mapping[&j];
                 let v = *sg.bonds().get(i, j);
-                if v > 0  {
+                if v > 0 {
                     if g.bonds().get(mi, mj) == &0 {
                         if !g.is_edge_possible(mi, mj) {
                             return None;
@@ -59,7 +59,6 @@ pub fn perform(
                     g.set_edge_impossible(mi, mj);
                     g.set_edge_impossible(mj, mi);
                 } else {
-
                     // Bonds are initialized with 0, so we just need to set them when they're not zero.
                     *g.bonds_mut().get_mut(mi, mj) = v;
                     *g.bonds_mut().get_mut(mj, mi) = v;

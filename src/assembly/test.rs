@@ -27,7 +27,7 @@ fn test_rings(structure: &str) -> HashSet<Graph> {
         crate::prelude::dump_set(f, sg.all_subgraphs()).unwrap();
     }
 
-    let gs = assemble(sg, None, None).unwrap();
+    let gs = assemble(sg, None, None).unwrap().0;
 
     assert!(gs.contains(&g));
 
@@ -60,7 +60,7 @@ fn test_7(structure: &str) -> HashSet<Graph> {
         crate::prelude::dump_set(f, sg.all_subgraphs()).unwrap();
     }
 
-    let gs = assemble(sg, None, None).unwrap();
+    let gs = assemble(sg, None, None).unwrap().0;
 
     assert!(gs.contains(&g));
 
@@ -278,7 +278,7 @@ fn cid_22116718() {
         .clone();
 
     let run = crate::assembly::run::Run::with_starting_graph(sg, starting_node, None, None);
-    let gs = run.assemble().unwrap();
+    let gs = run.assemble().unwrap().0;
     assert!(gs.contains(&g));
 
     if crate::statistics::trace_enabled() {

@@ -5,7 +5,6 @@ pub struct DnaEsque;
 
 impl super::MoleculeGenerator for DnaEsque {
     fn generate(size: usize) -> Graph {
-
         // At least two carbon atoms are needed, so two are always included.
         // Together with the first size-atom the first triangle is formed.
         // Every additional atom will add one triangle.
@@ -43,7 +42,7 @@ impl super::MoleculeGenerator for DnaEsque {
         }
 
         // First free id for hydrogen.
-        let mut z = if x < y { y + 1 } else { x + 1};
+        let mut z = if x < y { y + 1 } else { x + 1 };
 
         if x > y {
             std::mem::swap(&mut x, &mut y);
@@ -79,7 +78,7 @@ impl super::MoleculeGenerator for DnaEsque {
         g.atoms_mut()[z] = 1;
         *g.bonds_mut().get_mut(y, z) = 1;
         *g.bonds_mut().get_mut(z, y) = 1;
-        
+
         assert_eq!(z + 1, space);
 
         g
@@ -93,7 +92,7 @@ fn dna_esque() {
     for i in 0..10 {
         let g = DnaEsque::generate(i);
         // use std::fs::File;
-        // use std::io::Write;   
+        // use std::io::Write;
         // let filename = format!("trace/dna_{}.dot", i);
         // let mut f = File::create(filename).unwrap();
         // writeln!(&mut f, "graph dna {{").unwrap();

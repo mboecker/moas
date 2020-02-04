@@ -235,7 +235,12 @@ impl Graph {
             if use_element_names {
                 let label = crate::Atoms::label(*j);
                 if active_node.is_some() && active_node.unwrap() == i {
-                    writeln!(f, r#"  {} [shape=circle, label="{}", color=blue];"#, i + offset, label)?;
+                    writeln!(
+                        f,
+                        r#"  {} [shape=circle, label="{}", color=blue];"#,
+                        i + offset,
+                        label
+                    )?;
                 } else {
                     writeln!(f, r#"  {} [shape=circle, label="{}"];"#, i + offset, label)?;
                 }
@@ -295,17 +300,16 @@ impl Graph {
         // Hash the node labels and their occurance count in sorted order,
         // so that their ordering is consistent in different graphs.
         let mut label_counts = BTreeMap::new();
-        
+
         for i in 0..self.size() {
             // Increase label count of current node.
             let element1 = self.atoms()[i];
             *label_counts.entry(element1).or_insert(0) += 1;
 
-
             for j in 0..i {
                 let v = *self.bonds().get(i, j);
 
-                if v > 0 {      
+                if v > 0 {
                     // normalize element tuple
                     let element2 = self.atoms()[j];
                     let tuple = if element1 > element2 {

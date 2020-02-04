@@ -16,12 +16,12 @@ mod assembly;
 mod atoms;
 mod attachment;
 mod extra;
+mod generator;
 mod graph;
 mod isomorphism;
 mod prelude;
 mod statistics;
 mod subgraphs;
-mod generator;
 
 pub use assembly::assemble;
 pub use atoms::Atoms;
@@ -109,13 +109,21 @@ fn main() {
         .arg(
             Arg::with_name("cycles")
                 .long("cycles")
-                .help("if you set this flag a csv will be printed with the cid and the number of cycles")
+                .help("if you set this flag a csv will be printed with the cid and the number of cycles.")
+                .takes_value(false)
+        )
+        .arg(
+            Arg::with_name("find_matches")
+                .long("matches")
+                .help("after reassembly of a molecule check the database for any matches of the non-original molecules.")
                 .takes_value(false)
         )
         .get_matches();
 
     let max_queue_size = matches.value_of("queue_max").map(|x| x.parse().unwrap());
-    let time_limit = matches.value_of("time_limit").map(|x| Duration::from_secs(x.parse().unwrap()));
+    let time_limit = matches
+        .value_of("time_limit")
+        .map(|x| Duration::from_secs(x.parse().unwrap()));
 
     if let Some(i) = matches.value_of("dna") {
         use crate::subgraphs::Subgraphs;
@@ -137,19 +145,29 @@ fn main() {
 
         // re-assemble the graph
         let start = std::time::Instant::now();
-        let gs = assemble(sg, max_queue_size, time_limit);
+        let op = assemble(sg, max_queue_size, time_limit);
         let dur = std::time::Instant::now() - start;
 
-        if gs.is_some() {
+        if op.is_some() {
+            let (gs, ts) = op.unwrap();
             println!(
-                "{}, {}, {}, {}", i, gs.unwrap().len(), sg_dur.as_secs_f64(), dur.as_secs_f64()
+                "{}, {}, {}, {}, {}, {}",
+                i,
+                gs.len(),
+                sg_dur.as_secs_f64(),
+                dur.as_secs_f64(),
+                ts.total_active_graphs,
+                ts.max_active_graphs
             );
         } else {
             println!(
-                "{}, NA, {}, {}", i, sg_dur.as_secs_f64(), dur.as_secs_f64()
+                "{}, NA, {}, {}, NA, NA",
+                i,
+                sg_dur.as_secs_f64(),
+                dur.as_secs_f64()
             );
         }
-        
+
         return;
     }
 
@@ -211,7 +229,9 @@ fn main() {
             }
 
             // re-assemble the graph
-            let gs = assemble(sg, max_queue_size, time_limit).expect("overshot max queue size");
+            let gs = assemble(sg, max_queue_size, time_limit)
+                .expect("Overshot maximum queue size or reached time limit.")
+                .0;
 
             if crate::statistics::trace_enabled() {
                 let filename = "trace/result.dot";
@@ -219,11 +239,28 @@ fn main() {
                 crate::prelude::dump_set(f, gs.iter()).unwrap();
             }
 
-            println!(
-                "Reconstruction of compound {cid} resulted in {len} molecules.",
-                cid = x.cid,
-                len = gs.len()
-            );
+            if matches.is_present("find_matches") {
+                let db_gs = crate::prelude::get_database_similar(&conn, g.identifier());
+
+                'outer: for reconstructed_graph in gs {
+                    // Check non-original graphs with the database.
+                    if g != reconstructed_graph {
+                        for (cid2, g2) in &db_gs {
+                            if g2 == &reconstructed_graph {
+                                println!("{}", cid2);
+                                continue 'outer;
+                            }
+                        }
+                        println!("NA");
+                    }
+                }
+            } else {
+                println!(
+                    "Reconstruction of compound {cid} resulted in {len} molecules.",
+                    cid = x.cid,
+                    len = gs.len()
+                );
+            }
         }
     }
 
@@ -253,23 +290,32 @@ fn main() {
                     let id = g.identifier();
                     println!("{}, {}", x.cid, id);
                     continue;
-                }   
+                }
 
                 print!("{cid}", cid = x.cid);
 
                 // determine the graphs' subgraphs.
+                let start = std::time::Instant::now();
                 let sg = subgraphs::variants::SubgraphsAndRings::new(&g);
+                let sg_dur = std::time::Instant::now() - start;
 
                 // re-assemble the graph
                 let start = std::time::Instant::now();
-                let gs = assemble(sg, max_queue_size, time_limit);
+                let op = assemble(sg, max_queue_size, time_limit);
                 let dur = std::time::Instant::now() - start;
 
                 // assert!(gs.contains(&g), "The assembly of cid {} failed.", x.cid);
 
-                if let Some(gs) = gs {
+                if let Some((gs, ts)) = op {
                     // cid, duplicates, secs
-                    println!(", {dup}, {dur}", dup = gs.len(), dur = dur.as_secs_f64());
+                    println!(
+                        ", {}, {}, {}, {}, {}",
+                        gs.len(),
+                        sg_dur.as_secs_f64(),
+                        dur.as_secs_f64(),
+                        ts.total_active_graphs,
+                        ts.max_active_graphs
+                    );
 
                     // assert!(gs.contains(&g), "The assembly of cid {} failed.", x.cid);
 
@@ -350,16 +396,18 @@ fn main() {
 
                 // re-assemble the graph
                 let start = std::time::Instant::now();
-                let gs = assemble(sg, max_queue_size, time_limit);
+                let op = assemble(sg, max_queue_size, time_limit);
                 let dur = std::time::Instant::now() - start;
 
-                if let Some(gs) = gs {
+                if let Some((gs, ts)) = op {
                     // cid, duplicates, secs
                     println!(
-                        ", {dup}, {sg_dur}, {dur}",
-                        dup = gs.len(),
-                        sg_dur = sg_dur.as_secs_f64(),
-                        dur = dur.as_secs_f64()
+                        ", {}, {}, {}, {}, {}",
+                        gs.len(),
+                        sg_dur.as_secs_f64(),
+                        dur.as_secs_f64(),
+                        ts.total_active_graphs,
+                        ts.max_active_graphs
                     );
 
                     // assert!(gs.contains(&g), "The assembly of cid {} failed.", x.cid);

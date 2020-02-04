@@ -1,4 +1,5 @@
 use super::State;
+use super::TreeStatistics;
 use crate::subgraphs::Subgraphs;
 use crate::Graph;
 use std::collections::BTreeMap;
@@ -47,7 +48,7 @@ where
         subgraphs: S,
         mut g: Graph,
         max_queue_size: Option<usize>,
-        time_limit: Option<Instant>
+        time_limit: Option<Instant>,
     ) -> Run<S> {
         g.freeze_nonexisting_edges();
 
@@ -64,11 +65,13 @@ where
             q_passive,
             current_iter: 0,
             max_queue_size,
-            time_limit
+            time_limit,
         }
     }
 
-    pub fn assemble(mut self) -> Option<HashSet<Graph>> {
+    pub fn assemble(mut self) -> Option<(HashSet<Graph>, TreeStatistics)> {
+        let mut ts = TreeStatistics::default();
+
         for iter in 0.. {
             use chrono::Utc;
             if crate::statistics::trace_enabled() {
@@ -138,6 +141,12 @@ where
                 }
             }
 
+            // Grab some statistics from the current tree.
+            ts.total_active_graphs += self.q_active.len();
+            if self.q_active.len() > ts.max_active_graphs {
+                ts.max_active_graphs = self.q_active.len();
+            }
+
             // If the active queue is empty now,
             // no new states would be explored next iteration, so just stop the algorithm.
             if self.q_active.is_empty() {
@@ -173,7 +182,7 @@ where
             );
         }
 
-        Some(result)
+        Some((result, ts))
     }
 
     fn iterate(&self) -> HashSet<State<S>> {
@@ -207,7 +216,6 @@ where
 
     /// Explores one of the current states by trying to attach unused subgraphs.
     fn explore_state(&self, state: &State<S>) -> HashSet<State<S>> {
-
         // Computation exceeded time limit,
         // skip this state because its result won't be used anyway.
         if self.time_limit.is_some() && Instant::now() > self.time_limit.unwrap() {
@@ -263,7 +271,6 @@ where
                             // check if the attached_node already contained a similar new_node.
                             // this means checking if the combination of atom label and number of bonds is already present in the bitset.
                             if let Some(attached_node) = attached_node {
-
                                 // Only the anchor can gain neighbors.
                                 if attached_node
                                     .iter()
