@@ -151,11 +151,12 @@ fn main() {
         if op.is_some() {
             let (gs, ts) = op.unwrap();
             println!(
-                "{}, {}, {}, {}, {}, {}",
+                "{}, {}, {}, {}, {}, {}, {}",
                 i,
                 gs.len(),
                 sg_dur.as_secs_f64(),
                 dur.as_secs_f64(),
+                ts.iterations_needed,
                 ts.total_active_graphs,
                 ts.max_active_graphs
             );
@@ -309,10 +310,11 @@ fn main() {
                 if let Some((gs, ts)) = op {
                     // cid, duplicates, secs
                     println!(
-                        ", {}, {}, {}, {}, {}",
+                        ", {}, {}, {}, {}, {}, {}",
                         gs.len(),
                         sg_dur.as_secs_f64(),
                         dur.as_secs_f64(),
+                        ts.iterations_needed,
                         ts.total_active_graphs,
                         ts.max_active_graphs
                     );
@@ -325,7 +327,11 @@ fn main() {
                         crate::prelude::dump_set(f, gs.iter()).unwrap();
                     }
                 } else {
-                    println!(", NA, NA");
+                    println!(
+                        ", NA, {}, {}, NA, NA, NA",
+                        sg_dur.as_secs_f64(),
+                        dur.as_secs_f64()
+                    );
                 }
             }
         }
@@ -402,10 +408,11 @@ fn main() {
                 if let Some((gs, ts)) = op {
                     // cid, duplicates, secs
                     println!(
-                        ", {}, {}, {}, {}, {}",
+                        ", {}, {}, {}, {}, {}, {}",
                         gs.len(),
                         sg_dur.as_secs_f64(),
                         dur.as_secs_f64(),
+                        ts.iterations_needed,
                         ts.total_active_graphs,
                         ts.max_active_graphs
                     );
@@ -419,7 +426,7 @@ fn main() {
                     }
                 } else {
                     println!(
-                        ", NA, {sg_dur}, {dur}",
+                        ", NA, {sg_dur}, {dur}, NA, NA, NA",
                         sg_dur = sg_dur.as_secs_f64(),
                         dur = dur.as_secs_f64()
                     );

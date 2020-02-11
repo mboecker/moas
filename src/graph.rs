@@ -196,6 +196,8 @@ impl Graph {
             let v = *self.bonds.get(nodes[i] as usize, nodes[j] as usize);
             *g.bonds.get_mut(i, j) = v;
             *g.bonds.get_mut(j, i) = v;
+            g.set_edge_impossible(i, j);
+            g.set_edge_impossible(j, i);
         }
 
         assert!(g.is_contiguous());
@@ -260,14 +262,16 @@ impl Graph {
                     )?;
                 }
 
-                // if *self.bonds.get(i as usize, j as usize) == 0 && !self.is_edge_possible(i as usize, j as usize) {
-                //     writeln!(
-                //         f,
-                //         r#"  {} -- {} [splines=none, color=red];"#,
-                //         i + offset,
-                //         j + offset
-                //     )?;
-                // }
+                if *self.bonds.get(i as usize, j as usize) == 0
+                    && self.is_edge_possible(i as usize, j as usize)
+                {
+                    writeln!(
+                        f,
+                        r#"  {} -- {} [splines=none, color=green];"#,
+                        i + offset,
+                        j + offset
+                    )?;
+                }
             }
         }
 

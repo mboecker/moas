@@ -48,7 +48,9 @@ fn verify_mapping(g1: &Graph, g2: &Graph, partial_mapping: &[usize]) -> bool {
 
     for i in 0..n {
         for j in 0..i {
-            if g1.bonds().get(i, j) != g2.bonds().get(partial_mapping[i], partial_mapping[j]) {
+            let mi = partial_mapping[i];
+            let mj = partial_mapping[j];
+            if g1.bonds().get(i, j) != g2.bonds().get(mi, mj) || g1.is_edge_possible(i, j) != g2.is_edge_possible(mi, mj) {
                 return false;
             }
         }

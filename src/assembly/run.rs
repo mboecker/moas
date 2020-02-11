@@ -119,6 +119,8 @@ where
                 }
             }
 
+            ts.iterations_needed = iter + 1;
+
             if crate::statistics::trace_enabled() {
                 let duration = Instant::now() - start;
                 println!("Duration: {:.2}s", duration.as_secs_f64());
@@ -299,19 +301,6 @@ where
                             // Actually perform the attachment and create a graph.
                             let g = crate::attachment::perform(&state.g, &sg, mapping, new_node)?;
 
-                            if new_node.is_none() {
-                                // Throw away graphs that don't connect the anchor with another node.
-                                for i in 0..g.size() {
-                                    for j in 0..i {
-                                        if g.bonds().get(i, j) != state.g.bonds().get(i, j) {
-                                            if i != anchor && j != anchor {
-                                                return None;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
                             // Rule out graphs with too many atom bonds.
                             for i in 0..g.size() {
                                 let s: u8 = (0..g.size()).map(|j| g.bonds().get(i, j)).sum();
@@ -330,34 +319,36 @@ where
                             if used_subgraphs.is_subset_of(&self.subgraphs) {
                                 Some(State::new(g, used_subgraphs))
                             } else {
-                                // use std::hash::Hasher;
-                                // use std::io::Write;
-                                // let mut hasher =
-                                //     std::collections::hash_map::DefaultHasher::default();
-                                // sg.hash(&mut hasher);
-                                // let hash = hasher.finish();
+                                // if self.current_iter == 6 {
+                                //     use std::hash::Hasher;
+                                //     use std::io::Write;
+                                //     let mut hasher =
+                                //         std::collections::hash_map::DefaultHasher::default();
+                                //     sg.hash(&mut hasher);
+                                //     let hash = hasher.finish();
 
-                                // if crate::statistics::trace_enabled() {
-                                //     let filename = format!("trace/sgs_{}_invalid.dot", hash);
-                                //     let mut f = std::fs::File::create(filename).unwrap();
-                                //     writeln!(&mut f, "graph invalid {{").unwrap();
-                                //     sg.dump(&mut f, 0, false).unwrap();
-                                //     g.dump(&mut f, sg.size(), true).unwrap();
-                                //     writeln!(&mut f, "}}").unwrap();
-                                // }
+                                //     if crate::statistics::trace_enabled() {
+                                //         let filename = format!("trace/sgs_{}_invalid.dot", hash);
+                                //         let mut f = std::fs::File::create(filename).unwrap();
+                                //         writeln!(&mut f, "graph invalid {{").unwrap();
+                                //         sg.dump(&mut f, 0, false).unwrap();
+                                //         g.dump(&mut f, sg.size(), true).unwrap();
+                                //         writeln!(&mut f, "}}").unwrap();
+                                //     }
 
-                                // if crate::statistics::trace_enabled() {
-                                //     let filename = format!("trace/sgs_{}_used.dot", hash);
-                                //     let f = std::fs::File::create(filename).unwrap();
-                                //     crate::prelude::dump_map(f, used_subgraphs.with_counts())
-                                //         .unwrap();
-                                // }
+                                //     if crate::statistics::trace_enabled() {
+                                //         let filename = format!("trace/sgs_{}_used.dot", hash);
+                                //         let f = std::fs::File::create(filename).unwrap();
+                                //         crate::prelude::dump_map(f, used_subgraphs.with_counts())
+                                //             .unwrap();
+                                //     }
 
-                                // if crate::statistics::trace_enabled() {
-                                //     let filename = format!("trace/sgs_{}_avail.dot", hash);
-                                //     let f = std::fs::File::create(filename).unwrap();
-                                //     crate::prelude::dump_map(f, self.subgraphs.with_counts())
-                                //         .unwrap();
+                                //     if crate::statistics::trace_enabled() {
+                                //         let filename = format!("trace/sgs_{}_avail.dot", hash);
+                                //         let f = std::fs::File::create(filename).unwrap();
+                                //         crate::prelude::dump_map(f, self.subgraphs.with_counts())
+                                //             .unwrap();
+                                //     }
                                 // }
 
                                 // println!("the subgraphs just dont add up.");

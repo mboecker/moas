@@ -165,7 +165,8 @@ impl subgraphs::Subgraphs for SubgraphsAndRings {
             self.rings6
                 .keys()
                 .chain(self.rings5.keys())
-                .chain(self.subgraphs.keys())
+                .chain(self.subgraphs.keys().filter(|g| g.is_circular()))
+                .chain(self.subgraphs.keys().filter(|g| !g.is_circular()))
                 .chain(self.atoms.keys()),
         )
     }
