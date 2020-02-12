@@ -190,26 +190,21 @@ where
     fn iterate(&self) -> HashSet<State<S>> {
         #[cfg(feature = "parallel")]
         {
-            return self
+            let iter = self
                 .q_active
                 .par_iter()
-                .map(|state| self.explore_state(state))
-                .reduce(
-                    || HashSet::new(),
-                    |mut a, b| {
-                        a.extend(b);
-                        a
-                    },
-                );
+                .flat_map(|state| self.explore_state(state));
+
+            let mut hs = HashSet::new();
+            hs.par_extend(iter);
+            hs
         }
 
         #[cfg(not(feature = "parallel"))]
         {
-            // let min = self.q_active.iter().min().unwrap();
             return self
                 .q_active
                 .iter()
-                // .filter(|s| s <= &min)
                 .map(|state| self.explore_state(state))
                 .flatten()
                 .collect();
