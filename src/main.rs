@@ -118,6 +118,12 @@ fn main() {
                 .help("after reassembly of a molecule check the database for any matches of the non-original molecules.")
                 .takes_value(false)
         )
+        .arg(
+            Arg::with_name("dump_siblings")
+                .long("dump_siblings")
+                .help("after reassembly of a molecule dump all siblings in dot format into a file in the supplied folder.")
+                .takes_value(true)
+        )
         .get_matches();
 
     let max_queue_size = matches.value_of("queue_max").map(|x| x.parse().unwrap());
@@ -254,6 +260,15 @@ fn main() {
                         }
                         println!("NA");
                     }
+                }
+            } else if matches.value_of("dump_siblings").is_some() {
+                for (gid, reconstructed_graph) in gs.into_iter().enumerate() {
+                    use std::io::Write;
+                    let filename = format!("{}/{}.dot", matches.value_of("dump_siblings").unwrap(), gid);
+                    let mut f = std::fs::File::create(filename).unwrap();
+                    writeln!(&mut f, "graph g {{").unwrap();
+                    reconstructed_graph.dump(&mut f, 0, true).unwrap();
+                    writeln!(&mut f, "}}").unwrap();    
                 }
             } else {
                 println!(
